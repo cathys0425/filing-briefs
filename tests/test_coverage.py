@@ -37,6 +37,22 @@ class TextTests(unittest.TestCase):
         self.assertTrue(got.startswith("Item 2. Management's Discussion"))
         self.assertTrue(got.rstrip().endswith("Volume was flat."))
 
+    def test_section_spans_running_page_headers(self):
+        # Pattern seen in real 10-Q filings: the section heading is repeated as a page
+        # header on every page of the section, after a contents page.
+        h = "ITEM 2. MANAGEMENT'S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION\n"
+        body = ("Item 2.\nManagement's Discussion\n26\nItem 3.\nMarket Risk\n37\n"
+                "Item 2.\nPurchases of Equity Securities\n39\nItem 6.\nExhibits\n40\n"
+                "ITEM 1. FINANCIAL STATEMENTS\n" + "balance sheet " * 50 + "\n"
+                + h + "Revenue grew on pricing.\n" + h + "Volume was flat.\n" + h + "Fuel fell.\n"
+                "ITEM 3. QUANTITATIVE DISCLOSURES\nNo change.\n"
+                "Item 2. Purchases of Equity Securities\nWe bought shares.\nItem 3. Defaults\nNone\n")
+        got = text.section(body, r"item\s+2\.", [r"item\s+3\.", r"item\s+4\."])
+        for phrase in ("Revenue grew on pricing.", "Volume was flat.", "Fuel fell."):
+            self.assertIn(phrase, got)
+        self.assertNotIn("balance sheet", got)
+        self.assertNotIn("We bought shares", got)
+
     def test_missing_section_is_none(self):
         self.assertIsNone(text.section("no headings here", r"item\s+7\.", [r"item\s+8\."]))
 
