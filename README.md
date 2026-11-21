@@ -39,6 +39,7 @@ python3 -m coverage.run AAPL --since 2021-01-01 -e <cheap-model> -w <strong-mode
 python3 -m coverage.run KO PEP KDP --since 2021-01-01 -e <cheap-model> -w <strong-model> --industry beverages
 python3 -m unittest discover -s tests -t .
 python3 smoke_real.py   # live SEC and transcript sources, no model calls
+python3 smoke_real.py model   # one real extraction call, about $0.01
 ```
 
 How correctness is checked:

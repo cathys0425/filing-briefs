@@ -21,3 +21,8 @@ jobs:
         env:
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
         run: python smoke_real.py
+      - name: Model check - one extraction call on a real filing (about $0.01)
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python smoke_real.py model
