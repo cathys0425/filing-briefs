@@ -75,6 +75,9 @@ class PipelineTests(unittest.TestCase):
                     notes.append({"category": "business_model", "claim": "Sells widgets per unit",
                                   "quote": "We sell widgets to retailers under annual contracts"})
                 return json.dumps(notes), {"cost": 0.01}, 0.1
+            if "Write at most 8 bullets" in prompt:
+                return "- Sold widgets per unit [N1]\n- No citation here\n- Unknown id [N99]", {"cost": 0.01}, 0.1
+            assert "2026\n- Sold widgets per unit [N1]" in prompt  # the writer sees the year digest
             return "## Business model\n- Sells widgets per unit [N1]\n- Unsupported bullet", {"cost": 0.02}, 0.1
 
         filing = {"form": "10-K", "accession": "a", "filed": "2026-02-01", "period": "2025-12-31", "items": "", "url": "u"}
@@ -82,6 +85,7 @@ class PipelineTests(unittest.TestCase):
                     "later_differing_values": 0}]
         with tempfile.TemporaryDirectory() as d, \
                 mock.patch.object(extract, "CACHE", d), \
+                mock.patch.object(onepager, "CACHE", d), \
                 mock.patch.object(run.transcripts, "fetch", return_value=(0, 0)), \
                 mock.patch.object(run.edgar, "cik_for", return_value="0000000001"), \
                 mock.patch.object(run.edgar, "company", return_value={
@@ -98,7 +102,9 @@ class PipelineTests(unittest.TestCase):
         self.assertIn("| 2025-12-31 | 5,000 | 2026-02-01 | 0 |", page)
         self.assertIn("1 notes whose quote was found verbatim", page)
         self.assertIn("Not read: earnings calls: ticker not in the transcript dataset", page)
-        self.assertIn("3 notes dropped", page)  # one fabricated note per section
+        self.assertIn("3 notes dropped", page)
+        self.assertIn("through 1 year digests", page)
+        self.assertIn("2 digest bullets were dropped", page)  # one fabricated note per section
         self.assertIn("Bullet without a valid citation: - Unsupported bullet", page)
         self.assertIn('N1 (10-K 2025-12-31 Item 1 Business): "We sell widgets', page)
 

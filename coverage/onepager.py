@@ -1,18 +1,26 @@
 """Reduce step: write the company one-pager from verified notes, then check its citations."""
+import hashlib
+import json
+import os
 import re
+
+CACHE = os.environ.get("COVERAGE_CACHE", "data/cache")
 
 PER_CATEGORY = 40  # newest notes kept per category for the writer; the rest are counted, not hidden
 
 PROMPT = """Write a one-page company brief for a systematic long/short equity researcher.
-Use ONLY the numbered notes below. Every bullet must end with the ids of the notes it
-rests on, like [N12] or [N3][N40]. Do not state anything the notes do not support.
-No filler words such as "promising". At most 350 words. Markdown, exactly these sections:
+Use ONLY the year digests and numbered notes below. Every bullet must end with the ids of the
+notes it rests on, like [N12] or [N3][N40]; ids that appear in a digest bullet may be cited.
+Do not state anything the notes do not support. No filler words such as "promising".
+At most 450 words. Markdown, exactly these sections:
 
 ## Business model
 ## Revenue build-up
 (segments or volume x price; what drives each piece)
 ## Core thesis
 (2-3 bullets: what has to be true for revenue and margins to move, and in which direction)
+## What changed over time
+(3-5 bullets, oldest first: turning points only, each with its year)
 ## Catalysts
 (dated or datable; newest first)
 ## KPIs to track
@@ -21,9 +29,45 @@ No filler words such as "promising". At most 350 words. Markdown, exactly these 
 
 Company: {name} ({sic})
 
-Notes (id | document | category | claim):
+Year digests, oldest first:
+{digests}
+
+Most recent notes (id | document | category | claim):
 {notes}
 """
+
+
+DIGEST_PROMPT = """Below are notes from one company's filings and earnings calls for {year}.
+Write at most 8 bullets on what a researcher must remember about this year: changes to the
+business model or segments, what moved revenue and margins, guidance given and whether earlier
+guidance was met, dated events, new risks. Prefer changes over facts that are true every year.
+Every bullet must end with the ids of the notes it rests on, like [N12][N40]. Use only the notes.
+Bullets only, no headings.
+
+{notes}
+"""
+
+
+def digest(year, notes, model, complete):
+    """Summarize one year's notes. Returns (bullets with valid citations, number dropped, cost)."""
+    prompt = DIGEST_PROMPT.format(year=year, notes=listing(notes))
+    path = os.path.join(CACHE, "digest-" + hashlib.sha1((model + prompt).encode()).hexdigest() + ".json")
+    if os.path.exists(path):
+        with open(path) as f:
+            reply, cost = json.load(f)
+    else:
+        reply, usage, _ = complete([{"role": "user", "content": prompt}], model)
+        cost = usage.get("cost")
+        os.makedirs(CACHE, exist_ok=True)
+        with open(path, "w") as f:
+            json.dump([reply, cost], f)
+    bullets = [line.strip() for line in reply.splitlines() if line.lstrip().startswith(("-", "*"))]
+    bad = check_citations("\n".join(bullets), {n["id"] for n in notes})
+    return [b for b in bullets if b not in bad], len(bad), cost
+
+
+def listing(notes):
+    return "\n".join(f"{n['id']} | {n['doc']} | {n['category']} | {n['claim']}" for n in notes)
 
 
 def select(notes):
@@ -47,12 +91,19 @@ def check_citations(body, ids):
     return bad
 
 
-def write(company, revenue, notes, stats, model, complete):
+def write(company, revenue, notes, stats, model, digest_model, complete):
     kept, left_out = select(notes)
-    listing = "\n".join(f"{n['id']} | {n['doc']} | {n['category']} | {n['claim']}" for n in kept)
+    digests, digest_dropped, cost = [], 0, 0.0
+    for year in sorted({n["filed"][:4] for n in notes}):
+        bullets, bad, c = digest(year, [n for n in notes if n["filed"][:4] == year], digest_model, complete)
+        digests.append(f"{year}\n" + "\n".join(bullets))
+        digest_dropped += bad
+        cost += c or 0
     body, usage, _ = complete([{"role": "user", "content": PROMPT.format(
-        name=company["name"], sic=company["sic_description"], notes=listing)}], model)
-    by_id = {n["id"]: n for n in kept}
+        name=company["name"], sic=company["sic_description"], digests="\n\n".join(digests),
+        notes=listing(kept))}], model)
+    cost += usage.get("cost") or 0
+    by_id = {n["id"]: n for n in notes}
     unsupported = check_citations(body, set(by_id))
     cited = sorted(set(re.findall(r"\[(N\d+)\]", body)) & set(by_id), key=lambda i: int(i[1:]))
 
@@ -72,9 +123,11 @@ def write(company, revenue, notes, stats, model, complete):
             "- The writer model chose which notes matter. Omitted notes may contradict the brief."]
     out += [f"- Bullet without a valid citation: {b}" for b in unsupported]
     out += ["", "## Checks not done", "",
-            f"- {left_out} older notes were not shown to the writer (limit {PER_CATEGORY} per category)."]
+            f"- {left_out} older notes reached the writer only through {len(digests)} year digests "
+            f"(limit {PER_CATEGORY} full notes per category); {digest_dropped} digest bullets were dropped "
+            "for lacking a valid citation."]
     out += [f"- Not read: {f}" for f in stats["failures"]]
     out += [f"- Earnings call transcripts read: {stats['transcripts']} (dataset ends May 2025; later calls are missing). "
                  "8-K earnings releases are not read yet.",
             "- No comparison against consensus, price, or peers."]
-    return "\n".join(out) + "\n", usage.get("cost")
+    return "\n".join(out) + "\n", cost
