@@ -26,8 +26,8 @@ def get(url):
         with open(path, "rb") as f:
             return f.read()
     req = urllib.request.Request(url, headers={"User-Agent": UA})
-    for attempt in range(4):
-        time.sleep(0.15 if attempt == 0 else 10)
+    for attempt in range(21):  # up to 10 minutes of retries
+        time.sleep(0.15 if attempt == 0 else 30)
         try:
             with urllib.request.urlopen(req, timeout=90) as r:
                 body = r.read()
@@ -37,7 +37,8 @@ def get(url):
                 raise RuntimeError(
                     f"SEC refused {url} (403). Set SEC_USER_AGENT to a declared client, "
                     "e.g. 'Your Name your@email', as SEC requires.") from None
-            if e.code < 500 or attempt == 3:  # 5xx is retried: the dataset API returns 500 while its index loads
+            # 5xx is retried: the dataset API returns 500 while its index loads, about 5 minutes when cold
+            if e.code < 500 or attempt == 20:
                 raise
     os.makedirs(CACHE, exist_ok=True)
     with open(path, "wb") as f:

@@ -38,6 +38,7 @@ export SEC_USER_AGENT="Your Name your@email"   # SEC requires a declared client
 python3 -m coverage.run AAPL --since 2021-01-01 -e <cheap-model> -w <strong-model>
 python3 -m coverage.run KO PEP KDP --since 2021-01-01 -e <cheap-model> -w <strong-model> --industry beverages
 python3 -m unittest discover -s tests -t .
+python3 smoke_real.py   # live SEC and transcript sources, no model calls
 ```
 
 How correctness is checked:
