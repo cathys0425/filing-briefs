@@ -48,18 +48,26 @@ def section(text, start, ends):
     ('refer to Part II, "Item 8. Financial Statements"'). Headings repeat in the table of
     contents; the real section is the longest span. A span that runs over another `start`
     heading is not one section (a 10-Q contents lists "Item 2." twice, Part I and Part II,
-    and the second would run to the real Item 3). Returns None when no span is found, so
-    the caller can report it.
+    and the second would run to the real Item 3). The exception is a running page header:
+    some filings repeat the same heading text at the top of every page of the section, so
+    a repeat of the identical heading with no `ends` heading in between continues the
+    section. Returns None when no span is found, so the caller can report it.
     """
     def heads(pat):
         return [m.start() for m in re.finditer(r"^[ \t]*" + pat, text, re.I | re.M)]
 
+    def head(i):
+        return " ".join(text[i:i + 40].split())
+
     starts = heads(start)
     stops = sorted(e for pat in ends for e in heads(pat))
     best = None
-    for s, nxt in zip(starts, starts[1:] + [len(text)]):
+    for i, s in enumerate(starts):
         stop = next((e for e in stops if e > s), None)
-        if stop is None or stop > nxt:
+        if stop is None:
+            continue
+        later = [n for n in starts[i + 1:] if n < stop]
+        if any(head(n) != head(s) for n in later):
             continue
         if best is None or stop - s > len(best):
             best = text[s:stop]

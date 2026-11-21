@@ -73,7 +73,8 @@ def cover(ticker, since, extract_model, write_model, complete=complete):
         n["id"] = f"N{i}"
     stats = {"docs": sum(forms.values()), "by_form": dict(forms), "first": min(filed), "last": max(filed),
              "dropped": dropped, "failures": failures, "transcripts": forms["call"]}
-    page, write_cost = onepager.write(company, edgar.annual_revenue(cik), notes, stats, write_model, complete)
+    page, write_cost = onepager.write(company, edgar.annual_revenue(cik), notes, stats, write_model,
+                                      extract_model, complete)
     os.makedirs("out", exist_ok=True)
     with open(f"out/{ticker}.md", "w") as f:
         f.write(page)
