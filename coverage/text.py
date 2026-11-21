@@ -42,19 +42,27 @@ def html_to_text(raw):
 
 
 def section(text, start, ends):
-    """Longest span from a `start` marker to the next `ends` marker.
+    """Longest span from a `start` heading to the next `ends` heading.
 
-    Filings repeat item headings in the table of contents; the real section is the longest
-    span. Returns None when no span is found, so the caller can report it.
+    Only headings at the start of a line count: filings quote item names mid-sentence
+    ('refer to Part II, "Item 8. Financial Statements"'). Headings repeat in the table of
+    contents; the real section is the longest span. A span that runs over another `start`
+    heading is not one section (a 10-Q contents lists "Item 2." twice, Part I and Part II,
+    and the second would run to the real Item 3). Returns None when no span is found, so
+    the caller can report it.
     """
+    def heads(pat):
+        return [m.start() for m in re.finditer(r"^[ \t]*" + pat, text, re.I | re.M)]
+
+    starts = heads(start)
+    stops = sorted(e for pat in ends for e in heads(pat))
     best = None
-    for m in re.finditer(start, text, re.I):
-        stops = [e.start() for pat in ends for e in re.finditer(pat, text[m.end():], re.I)]
-        if not stops:
+    for s, nxt in zip(starts, starts[1:] + [len(text)]):
+        stop = next((e for e in stops if e > s), None)
+        if stop is None or stop > nxt:
             continue
-        span = text[m.start(): m.end() + min(stops)]
-        if best is None or len(span) > len(best):
-            best = span
+        if best is None or stop - s > len(best):
+            best = text[s:stop]
     return best
 
 

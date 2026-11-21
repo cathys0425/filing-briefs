@@ -24,6 +24,19 @@ class TextTests(unittest.TestCase):
         self.assertIn("annual contracts", text.section(body, start, ends))
         self.assertNotIn("42%", text.section(body, start, ends))
 
+    def test_section_ignores_cross_references_and_second_contents_entry(self):
+        # Pattern seen in real 10-Q filings: the contents lists "Item 2." for Part I and
+        # Part II, and the body quotes item names mid-sentence.
+        body = ("Item 1.\nFinancial Statements\n2\nItem 2.\nMD&A\n27\nItem 3.\nMarket Risk\n39\n"
+                "Item 1.\nLegal Proceedings\n40\nItem 2.\nUnregistered Sales\n42\n"
+                "Item 1. Financial Statements\n" + "balance sheet " * 50 + "\n"
+                "Item 2. Management's Discussion\nRevenue grew on pricing; refer to Part II, "
+                "\u201cItem 3. Legal Proceedings\u201d for the tax case. Volume was flat.\n"
+                "Item 3. Quantitative Disclosures\nSee the annual report.\n")
+        got = text.section(body, r"item\s+2\.", [r"item\s+3\.", r"item\s+4\."])
+        self.assertTrue(got.startswith("Item 2. Management's Discussion"))
+        self.assertTrue(got.rstrip().endswith("Volume was flat."))
+
     def test_missing_section_is_none(self):
         self.assertIsNone(text.section("no headings here", r"item\s+7\.", [r"item\s+8\."]))
 
