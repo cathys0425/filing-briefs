@@ -15,7 +15,7 @@ import urllib.error
 import urllib.request
 
 CACHE = os.environ.get("COVERAGE_CACHE", "data/cache")
-UA = os.environ.get("SEC_USER_AGENT", "research-script")
+UA = os.environ.get("SEC_USER_AGENT", "research-script").strip("'\" ")  # tolerate a quoted value
 REVENUE_TAGS = ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet"]
 
 
