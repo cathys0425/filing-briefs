@@ -19,9 +19,9 @@ MAX_CHARS = 400000  # a section this long has swallowed its neighbours
 def main():
     if not os.environ.get("SEC_USER_AGENT"):
         sys.exit("SEC_USER_AGENT is not set (in GitHub: add it as a repository secret).")
-    os.environ["COVERAGE_CACHE"] = tempfile.mkdtemp()
-    os.chdir(tempfile.mkdtemp())  # transcripts.fetch writes under ./data
+    os.environ["COVERAGE_CACHE"] = tempfile.mkdtemp()  # read when coverage is imported
     from coverage import edgar, text, transcripts
+    os.chdir(tempfile.mkdtemp())  # transcripts.fetch writes under ./data
 
     failures = []
     for ticker in TICKERS:
