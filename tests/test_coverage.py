@@ -104,7 +104,7 @@ class IndustryTests(unittest.TestCase):
                  "- AAA cites the appendix [AAA N9]\n- No citation")
         with tempfile.TemporaryDirectory() as d, mock.patch.object(onepager, "CACHE", d):
             view, _ = run.industry_view("parts", pages, "m", complete=lambda m, model: (reply, {"cost": 0.01}, 0.1))
-        flagged = [l for l in view.splitlines() if l.startswith("- Bullet without")]
+        flagged = [line for line in view.splitlines() if line.startswith("- Bullet without")]
         self.assertEqual(len(flagged), 3)
         self.assertNotIn("Both sell parts", " ".join(flagged))
 
@@ -114,7 +114,8 @@ class PipelineTests(unittest.TestCase):
         def fake_complete(messages, model):
             prompt = messages[0]["content"]
             if "Return JSON only" in prompt:
-                notes = [{"category": "risk", "claim": "made up", "quote": "this passage is not in the document at all"}]
+                notes = [{"category": "risk", "claim": "made up",
+                          "quote": "this passage is not in the document at all"}]
                 if "Item 1 Business" in prompt:
                     notes.append({"category": "business_model", "claim": "Sells widgets per unit",
                                   "quote": "We sell widgets to retailers under annual contracts"})
@@ -124,7 +125,8 @@ class PipelineTests(unittest.TestCase):
             assert "2026\n- Sold widgets per unit [N1]" in prompt  # the writer sees the year digest
             return "## Business model\n- Sells widgets per unit [N1]\n- Unsupported bullet", {"cost": 0.02}, 0.1
 
-        filing = {"form": "10-K", "accession": "a", "filed": "2026-02-01", "period": "2025-12-31", "items": "", "url": "u"}
+        filing = {"form": "10-K", "accession": "a", "filed": "2026-02-01", "period": "2025-12-31",
+                  "items": "", "url": "u"}
         revenue = [{"period_end": "2025-12-31", "value": 5e9, "filed": "2026-02-01", "tag": "Revenues",
                     "later_differing_values": 0}]
         with tempfile.TemporaryDirectory() as d, \
@@ -161,7 +163,8 @@ class PipelineTests(unittest.TestCase):
                  "<p>Item 1B.Unresolved Staff Comments</p><p>None</p><p>Item 2.Properties</p><p>Page 8</p>"
                  "<p>Item 7.MD&amp;A</p><p>Pages 21-30</p><p>Item 7A.Market risk</p><p>Page 47</p>"
                  "<p>Item 8.Statements</p></body></html>")
-        filing = {"form": "10-K", "accession": "a", "filed": "2026-02-01", "period": "2025-12-31", "items": "", "url": "u"}
+        filing = {"form": "10-K", "accession": "a", "filed": "2026-02-01", "period": "2025-12-31",
+                  "items": "", "url": "u"}
         seen = []
 
         def fake_complete(messages, model):

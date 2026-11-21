@@ -134,7 +134,8 @@ def write(company, revenue, notes, stats, model, digest_model, complete):
             f"(limit {PER_CATEGORY} full notes per category); {digest_dropped} digest bullets were dropped "
             "for lacking a valid citation."]
     out += [f"- Not read: {f}" for f in stats["failures"]]
-    out += [f"- Earnings call transcripts read: {stats['transcripts']} (dataset ends May 2025; later calls are missing). "
+    out += [f"- Earnings call transcripts read: {stats['transcripts']} "
+            "(dataset ends May 2025; later calls are missing). "
                  "8-K earnings releases are not read yet.",
             "- No comparison against consensus, price, or peers."]
     return "\n".join(out) + "\n", cost

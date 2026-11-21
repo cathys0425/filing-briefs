@@ -73,7 +73,8 @@ def cover(ticker, since, extract_model, write_model, complete=complete):
     if not found:
         failures.append("earnings calls: ticker not in the transcript dataset")
     if short:
-        failures.append(f"earnings calls: {short} transcripts are under {transcripts.SHORT} characters and may be cut off")
+        failures.append(f"earnings calls: {short} transcripts are under {transcripts.SHORT} characters "
+                        "and may be cut off")
     forms, filed = collections.Counter(), []
     for label, form, day, body in documents(ticker, cik, since):
         if body is None:

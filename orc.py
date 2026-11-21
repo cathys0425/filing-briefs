@@ -75,7 +75,9 @@ def complete(messages, model, max_tokens=None, temperature=None):
     choice = body["choices"][0]
     text = (choice["message"].get("content") or "").strip()
     if not text:  # reasoning models can spend the whole token budget thinking
-        why = "hit --max-tokens before answering; raise or drop it" if choice.get("finish_reason") == "length" else f"finish_reason={choice.get('finish_reason')}"
+        why = f"finish_reason={choice.get('finish_reason')}"
+        if choice.get("finish_reason") == "length":
+            why = "hit --max-tokens before answering; raise or drop it"
         raise APIError(f"empty reply ({why})")
     return text, body.get("usage", {}), time.time() - t
 
@@ -96,7 +98,8 @@ def read_prompt(arg):
 def cmd_ask(a):
     text, usage, secs = complete(build_messages(read_prompt(a.prompt), a.system), a.model, a.max_tokens, a.temperature)
     print(text)
-    print(f"\n[{a.model} | {usage.get('total_tokens', '?')} tokens | ${usage.get('cost', 0):.6f} | {secs:.1f}s]", file=sys.stderr)
+    print(f"\n[{a.model} | {usage.get('total_tokens', '?')} tokens | ${usage.get('cost', 0):.6f} | {secs:.1f}s]",
+          file=sys.stderr)
 
 
 def cmd_chat(a):
@@ -194,11 +197,22 @@ def main():
         sp.add_argument("--max-tokens", type=int)
         sp.add_argument("--temperature", type=float)
 
-    sp = sub.add_parser("ask", help="one-shot answer"); sp.add_argument("prompt", nargs="?"); common(sp); sp.set_defaults(fn=cmd_ask)
-    sp = sub.add_parser("chat", help="interactive chat"); common(sp); sp.set_defaults(fn=cmd_chat)
-    sp = sub.add_parser("compare", help="same prompt, several models"); sp.add_argument("prompt", nargs="?"); common(sp, multi=True)
-    sp.add_argument("-o", "--out", help="save results as JSON"); sp.set_defaults(fn=cmd_compare)
-    sp = sub.add_parser("models", help="list models"); sp.add_argument("--free", action="store_true"); sp.add_argument("--grep"); sp.set_defaults(fn=cmd_models)
+    sp = sub.add_parser("ask", help="one-shot answer")
+    sp.add_argument("prompt", nargs="?")
+    common(sp)
+    sp.set_defaults(fn=cmd_ask)
+    sp = sub.add_parser("chat", help="interactive chat")
+    common(sp)
+    sp.set_defaults(fn=cmd_chat)
+    sp = sub.add_parser("compare", help="same prompt, several models")
+    sp.add_argument("prompt", nargs="?")
+    common(sp, multi=True)
+    sp.add_argument("-o", "--out", help="save results as JSON")
+    sp.set_defaults(fn=cmd_compare)
+    sp = sub.add_parser("models", help="list models")
+    sp.add_argument("--free", action="store_true")
+    sp.add_argument("--grep")
+    sp.set_defaults(fn=cmd_models)
 
     a = p.parse_args()
     try:
