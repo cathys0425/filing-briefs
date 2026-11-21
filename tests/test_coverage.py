@@ -64,6 +64,12 @@ class VerifyTests(unittest.TestCase):
         ok, bad = extract.verify([real, fake], RISK)
         self.assertEqual((ok, bad), ([real], [fake]))
 
+    def test_number_missing_from_quote_is_dropped(self):
+        quote = "A single customer accounted for 42% of net sales in fiscal 2025."
+        good = {"category": "risk", "claim": "One customer was 42% of FY2025 sales", "quote": quote}
+        bad = {"category": "risk", "claim": "One customer was 42% of sales, up from 30%", "quote": quote}
+        self.assertEqual(extract.verify([good, bad], RISK), ([good], [bad]))
+
     def test_whitespace_differences_still_match(self):
         n = {"category": "risk", "claim": "c", "quote": "A single  customer\naccounted for 42% of net sales"}
         self.assertEqual(extract.verify([n], RISK)[0], [n])

@@ -1,4 +1,5 @@
 """Reduce step: write the company one-pager from verified notes, then check its citations."""
+import datetime
 import hashlib
 import json
 import os
@@ -22,12 +23,15 @@ At most 450 words. Markdown, exactly these sections:
 ## What changed over time
 (3-5 bullets, oldest first: turning points only, each with its year)
 ## Catalysts
-(dated or datable; newest first)
+(events still ahead of {today}, dated or datable, nearest first; an event that has already
+happened is not a catalyst and belongs under "What changed over time" if it matters)
 ## KPIs to track
 ## Potentially useful datasets
 (each: the dataset, the driver or KPI it would track, and why it should lead reported numbers)
 
 Company: {name} ({sic})
+Today: {today}. The newest document below may be older than today; say so in Core thesis if
+the latest guidance is more than six months old.
 
 Year digests, oldest first:
 {digests}
@@ -100,7 +104,8 @@ def write(company, revenue, notes, stats, model, digest_model, complete):
         digest_dropped += bad
         cost += c or 0
     body, usage, _ = complete([{"role": "user", "content": PROMPT.format(
-        name=company["name"], sic=company["sic_description"], digests="\n\n".join(digests),
+        name=company["name"], sic=company["sic_description"], today=datetime.date.today().isoformat(),
+        digests="\n\n".join(digests),
         notes=listing(kept))}], model)
     cost += usage.get("cost") or 0
     by_id = {n["id"]: n for n in notes}
@@ -115,7 +120,7 @@ def write(company, revenue, notes, stats, model, digest_model, complete):
     out += ["", "## Verified", "",
             f"- {stats['docs']} documents read ({stats['by_form']}), filed {stats['first']} to {stats['last']}.",
             f"- {len(notes)} notes whose quote was found verbatim in its source document; "
-            f"{stats['dropped']} notes dropped because the quote was not found.",
+            f"{stats['dropped']} notes dropped because the quote was not found or lacked a number stated in the claim.",
             f"- {len(cited)} notes cited above. Quotes:"]
     out += [f"  - {i} ({by_id[i]['doc']}): \"{by_id[i]['quote']}\"" for i in cited]
     out += ["", "## Assumed, not verified", "",

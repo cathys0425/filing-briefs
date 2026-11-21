@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import re
 
 from coverage.text import normalize
 
@@ -22,7 +23,9 @@ Extract only facts that help answer:
 Return JSON only: a list of objects {{"category": one of {categories}, "claim": one sentence
 in your words, "quote": an exact, contiguous passage copied from the document that supports
 the claim}}. For dataset_idea the quote is the passage naming the driver the dataset would track.
-Copy quotes character for character. Do not include a note you cannot quote. At most 15 notes.
+Copy quotes character for character. Every number in a claim must appear in its quote, written the
+same way (do not convert units or round); extend the quote until it contains the number.
+Do not include a note you cannot quote. At most 15 notes.
 
 Document: {label}
 ---
@@ -42,10 +45,21 @@ def parse_notes(reply):
     return notes
 
 
+def numbers(s):
+    """Numbers in a string, ignoring years and period labels (Q3, FY2025, H1), which come from the document label."""
+    s = re.sub(r"\b(?:Q|FY|H)\s?\d+\b|\b(?:19|20)\d\d\b", " ", s, flags=re.I)
+    return {m.replace(",", "").rstrip(".") for m in re.findall(r"\d[\d,]*\.?\d*", s)}
+
+
 def verify(notes, source):
-    """Split notes into (quote found in source, quote not found)."""
+    """Split notes into (supported, not supported).
+
+    Supported means the quote is found verbatim in the source and every number in the claim
+    also appears in the quote, so a quote cannot back a figure it does not contain.
+    """
     src = normalize(source)
-    ok = [n for n in notes if len(n["quote"]) >= 20 and normalize(n["quote"]) in src]
+    ok = [n for n in notes if len(n["quote"]) >= 20 and normalize(n["quote"]) in src
+          and numbers(n["claim"]) <= numbers(n["quote"])]
     return ok, [n for n in notes if n not in ok]
 
 
