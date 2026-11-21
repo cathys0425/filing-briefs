@@ -3,3 +3,5 @@ __pycache__/
 compare.json
 .env
 results.jsonl
+data/
+out/

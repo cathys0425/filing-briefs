@@ -28,3 +28,22 @@ python3 orc.py models --free
 - Free models are rate-limited (HTTP 429). The client retries 3 times with backoff, then reports the error.
 - Reasoning models can spend a small `--max-tokens` budget on thinking and return nothing; the client reports this as an empty reply. Leave `--max-tokens` off unless you need it.
 - For paid models, add credits at openrouter.ai and pass the model id with `-m`.
+
+## Company and industry coverage (`coverage/`)
+
+Reads a company's 10-K and 10-Q filings from SEC EDGAR (and earnings call transcripts you supply), and writes a one-page brief: business model, revenue build-up, core thesis, catalysts, KPIs, useful datasets.
+
+```bash
+export SEC_USER_AGENT="Your Name your@email"   # SEC requires a declared client
+python3 -m coverage.run AAPL --since 2021-01-01 -e <cheap-model> -w <strong-model>
+python3 -m coverage.run KO PEP KDP --since 2021-01-01 -e <cheap-model> -w <strong-model> --industry beverages
+python3 -m unittest discover -s tests -t .
+```
+
+How correctness is checked:
+
+- Every extracted note carries a verbatim quote; code drops notes whose quote is not in the source document.
+- Every bullet in the brief must cite note ids; bullets without a valid citation are listed under "Assumed, not verified".
+- Revenue history comes from XBRL as first reported, with the date it became public. The model never produces these numbers.
+
+Not covered yet: 8-K earnings releases, foreign filers (20-F), segment revenue tables. Transcripts are read only from `data/transcripts/<TICKER>/<YYYY-MM-DD>.txt`.
