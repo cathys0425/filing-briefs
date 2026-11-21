@@ -42,8 +42,13 @@ python3 -m unittest discover -s tests -t .
 
 How correctness is checked:
 
-- Every extracted note carries a verbatim quote; code drops notes whose quote is not in the source document.
+- Every extracted note carries a verbatim quote; code drops notes whose quote is not in the source document or does not contain every number stated in the claim.
+- Each year's notes are condensed into cited digest bullets so older history reaches the brief; digest bullets without a valid citation are dropped.
 - Every bullet in the brief must cite note ids; bullets without a valid citation are listed under "Assumed, not verified".
+- Every industry-view bullet must cite a note from the brief of each company it names; the rest are listed under "Assumed, not verified".
+- Sections shorter than 2,000 characters are reported as not read instead of being sent to the model.
 - Revenue history comes from XBRL as first reported, with the date it became public. The model never produces these numbers.
 
-Not covered yet: 8-K earnings releases, foreign filers (20-F), segment revenue tables, earnings calls after May 2025 (add them yourself as `data/transcripts/<TICKER>/<YYYY-MM-DD>.txt`).
+Example output is in `examples/` (KO, three railroads, eleven semiconductor companies, two industry views).
+
+Not covered yet: 8-K earnings releases, foreign filers (20-F), segment revenue tables, filings that list items only in a page index (Intel), earnings calls after May 2025 (add them yourself as `data/transcripts/<TICKER>/<YYYY-MM-DD>.txt`).
