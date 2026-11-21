@@ -1,39 +1,36 @@
+# Industry view: semiconductors (NVDA, AMD, INTC, TXN, QCOM, AVGO, MU, ADI, AMAT, LRCX, KLAC)
+
 ## How the industry makes money
-- **Chip sellers:** Revenue is volume times price and mix. NVDA, AMD, QCOM and AVGO are fabless; AVGO relies on TSMC for about 95% of foundry-made wafers. INTC, TXN and ADI own fabs, and ADI also uses foundries. MU sells memory.
-- **Add-ons:** QCOM earns per-unit licensing royalties and AVGO sells infrastructure software.
-- **Equipment makers:** AMAT, LRCX and KLAC sell tools plus recurring services and spares on the installed base.
-- **Terms:** Most sales are cancellable purchase orders. MU is the exception, with take-or-pay deals and customer deposits.
+- Chip sellers book mostly cancellable purchase orders: NVDA, AMD, QCOM [NVDA N549][AMD N548][QCOM N989].
+- Equipment makers add recurring services and spares: AMAT, LRCX [AMAT N485][LRCX N500].
+- Owned fabs make costs fixed, so margins move with loadings [TXN N477].
+- MU uses multi-year take-or-pay deals, backed by $12.75B of customer deposits [MU N574][MU N623].
 
 ## Common revenue drivers and KPIs
-- AI and data-center spending, which drives NVDA, AMD, AVGO, MU and the tool makers.
-- Price and mix: ASPs for MU, QCOM and AMD Client; mix for NVDA and AVGO.
-- Gross margin and factory loading or utilization: TXN, ADI, INTC, MU.
-- Backlog and book-to-bill: KLAC, AMAT, ADI.
-- Customer, distributor and China concentration.
-- Inventory days and purchase commitments.
+- AI data center demand: NVDA Data Center was $89.0B (+117%) in Q2 FY27, and AMD's was $8.5B (+97%) in the September 2026 quarter [NVDA N607][AMD N643]. AVGO semiconductor revenue was $20,839M (+127%) in the August quarter [AVGO N553].
+- Volume × price: MU FY2026 DRAM was +252% (ASP ~+180%, bits mid-20%) [MU N577][MU N624]. AMD Client units rose 6% and ASP 1% in the September quarter [AMD N644].
+- Gross margin: TXN was 64.2% in Q3 2026, MU 81% in FY2026 and LRCX 50.5% in FY26 [TXN N536][MU N628][LRCX N564].
+- China share: AMAT 28% of Q3 revenue, LRCX 34% of FY26, KLAC 30% of FY26 [AMAT N579][LRCX N548][KLAC N634].
 
 ## Where the companies differ
-- **AI leaders:** Latest quarterly growth was +117% for NVDA Data Center, +127% for AVGO semiconductors and +97% for AMD Data Center. MU's FY26 revenue was $133.2B versus $37.4B.
-- **Cyclical recovery:** TXN rose 28% and ADI 40% in their latest quarters, on industrial, automotive and data-center demand.
-- **Under pressure:** QCOM handsets are falling on memory-driven inventory cuts and customers' in-house modems (FY26 revenue $43.1B versus $44.3B). INTC was shrinking, but its data is stale.
-- **Equipment:** LRCX systems rose 62% year over year. KLAC backlog was $12.57B versus $7.86B.
-- **China share of revenue:** LRCX 34%, KLAC 30%, AMAT 28%. TXN ships about 50% into China, while NVDA says it is effectively foreclosed from China data-center compute.
-- **Gross margin (latest):** MU 85%, NVDA 75.0%, AVGO 69%, ADI 67.3%, TXN 64.2%, KLAC 61.9%, AMD 54%, LRCX 52.3%, AMAT 50.3%.
-- **Guidance staleness:** NVDA, AVGO, ADI, AMAT and LRCX have no recent numeric guidance. INTC's newest material is about 19 months old.
+- Manufacturing: AVGO outsources, with TSMC making about 95% of contract wafers. TXN owns fabs [AVGO N485][AVGO N486][TXN N528].
+- Concentration: three NVDA direct customers were 21%, 17% and 16% of Q1 FY27 revenue. AVGO's top five were about 55% of quarterly revenue [NVDA N595][AVGO N557].
+- Handsets: QCOM handset chip revenue is falling as OEMs cut shipments [QCOM N1048].
+- Backlog: KLAC backlog was $12.57B at June 2026, against $7.86B a year earlier [KLAC N624].
 
 ## Catalysts shared across the group
-- **Export and licensing:** The KLAC Affiliates Rule suspension and LRCX rare-earth suspension both run to November 2026. Licensing also affects NVDA, AMD and AMAT.
-- **Tariffs:** Section 232 and 301 actions are cited by MU, KLAC and QCOM.
-- **Memory shortage and pricing:** It hits QCOM handsets, NVDA consumer PCs and KLAC costs, and it lifts MU.
-- **Customer buildout limits:** Data-center, power and capital availability gate NVDA, AMD and MU shipments.
-- **Tax:** Global minimum tax rises hit AVGO, AMAT and KLAC.
-- **CHIPS tax credit:** The credit rose from 25% to 35% (TXN, AMAT).
+- China export and licence decisions: LRCX has undated licence decisions, and KLAC's BIS Affiliates Rule suspension runs to November 2026 [LRCX N443][LRCX N549][KLAC N640].
+- Tariffs and Section 232 actions, undated: KLAC, MU [KLAC N641][MU N612][MU N613].
+- Global minimum tax: KLAC adds $94.5M of fiscal 2027 expense, and AVGO expects higher tax rates [KLAC N705][AVGO N500].
+- Capacity ramps: MU Boise wafers mid-2027, and TXN's LFAB (undated) [MU N630][TXN N524].
 
 ## Datasets that would cover several companies at once
-- **Hyperscaler capex and data-center power/construction:** NVDA, AMD, AVGO, ADI, MU, AMAT, KLAC.
-- **DRAM/NAND contract and spot prices:** MU, QCOM, KLAC, NVDA.
-- **PC and smartphone shipments, including sell-through:** AMD, INTC, QCOM, MU.
-- **Distributor sell-through and inventory:** TXN, ADI, AVGO.
-- **China-bound customs and import data:** TXN, AMD, MU, KLAC, LRCX.
-- **Industrial and automotive production or PMI:** TXN, ADI, QCOM.
-- **Wafer starts and fab utilization:** AMAT, LRCX, KLAC.
+- Hyperscaler capex and data-center power: tracks AI accelerator, networking and tool demand. Covers NVDA, AVGO, AMAT, ADI, KLAC [NVDA N843][AVGO N798][AMAT N885][ADI N421][KLAC N665].
+- Distributor sell-through and inventory: tracks channel demand ahead of reported sales. Covers TXN, AVGO, ADI [TXN N475][AVGO N530][ADI N433].
+- PC and smartphone shipments: tracks client and handset units. Covers AMD, INTC, QCOM, MU [AMD N656][INTC N188][QCOM N984][MU N910].
+- DRAM/NAND price indices: tracks MU's ASP, KLAC's DRAM cost pressure and QCOM's handset orders. Covers MU, KLAC, QCOM [MU N635][KLAC N666][QCOM N954].
+- China-bound customs and import data: tracks China revenue exposure. Covers TXN, KLAC, LRCX, AMD [TXN N474][KLAC N648][LRCX N780][AMD N581].
+
+## Assumed, not verified
+
+- A citation shows the bullet points at a note in that company's brief; it does not show the bullet reads the brief correctly.

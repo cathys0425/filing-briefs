@@ -97,6 +97,18 @@ class CitationTests(unittest.TestCase):
         self.assertEqual(onepager.check_citations(body, {"N1"}), ["- Great management", "- Growing fast [N99]"])
 
 
+class IndustryTests(unittest.TestCase):
+    def test_bullets_must_cite_every_company_they_name(self):
+        pages = {"AAA": "- Sells widgets [N1]\n## Revenue as first reported\n[N9]", "BBB": "- Sells gears [N2]\n"}
+        reply = ("- Both sell parts [AAA N1][BBB N2]\n- AAA and BBB grow fast [AAA N1]\n"
+                 "- AAA cites the appendix [AAA N9]\n- No citation")
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(onepager, "CACHE", d):
+            view, _ = run.industry_view("parts", pages, "m", complete=lambda m, model: (reply, {"cost": 0.01}, 0.1))
+        flagged = [l for l in view.splitlines() if l.startswith("- Bullet without")]
+        self.assertEqual(len(flagged), 3)
+        self.assertNotIn("Both sell parts", " ".join(flagged))
+
+
 class PipelineTests(unittest.TestCase):
     def test_end_to_end_with_stubs(self):
         def fake_complete(messages, model):

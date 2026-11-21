@@ -10,6 +10,7 @@ import collections
 import glob
 import json
 import os
+import re
 
 from coverage import edgar, extract, onepager, text, transcripts
 from orc import APIError, complete
@@ -21,10 +22,34 @@ Write a one-page industry view for a systematic long/short equity researcher. Ma
 ## Where the companies differ
 ## Catalysts shared across the group
 ## Datasets that would cover several companies at once
-Refer to companies by ticker. Use only what the briefs say. At most 400 words.
+(each: the dataset, the driver or KPI it tracks, and the tickers it covers)
+Use only what the briefs say. Every bullet must end with the brief notes it rests on, written as
+ticker plus note id exactly as cited in that company's brief, like [UNP N12][CSX N40]. Name a
+company in a bullet only if you cite a note from its brief. Keep figures exactly as the briefs
+state them, with their period. At most 400 words.
 
 {briefs}
 """
+
+
+def industry_view(name, pages, model, complete=complete):
+    """Industry view from company briefs {ticker: page}. Returns (markdown, cost)."""
+    bodies = {t: p.split("## Revenue as first reported")[0] for t, p in pages.items()}
+    briefs = "\n\n".join(f"=== {t} ===\n{b}" for t, b in bodies.items())
+    view, cost = onepager.cached_reply("industry", INDUSTRY_PROMPT.format(name=name, briefs=briefs), model, complete)
+    valid = {f"{t} {i}" for t, b in bodies.items() for i in re.findall(r"\[(N\d+)\]", b)}
+    bad = []
+    for line in view.splitlines():
+        if line.lstrip().startswith(("-", "*")):
+            cited = re.findall(r"\[([A-Z.\-]+ N\d+)\]", line)
+            named = {t for t in bodies if re.search(rf"\b{re.escape(t)}\b", re.sub(r"\[[^\]]*\]", "", line))}
+            if not cited or any(c not in valid for c in cited) or not named <= {c.split()[0] for c in cited}:
+                bad.append(line.strip())
+    out = [f"# Industry view: {name} ({', '.join(pages)})", "", view.strip(), "", "## Assumed, not verified", "",
+           "- A citation shows the bullet points at a note in that company's brief; it does not show the "
+           "bullet reads the brief correctly."]
+    out += [f"- Bullet without a valid citation for every company it names: {b}" for b in bad]
+    return "\n".join(out) + "\n", cost
 
 
 def documents(ticker, cik, since):
@@ -98,12 +123,10 @@ def main():
     a = p.parse_args()
     pages = {t: cover(t, a.since, a.extract_model, a.write_model) for t in a.tickers}
     if a.industry:
-        briefs = "\n\n".join(pages.values())
-        view, _, _ = complete([{"role": "user", "content": INDUSTRY_PROMPT.format(name=a.industry, briefs=briefs)}],
-                              a.write_model)
+        view, cost = industry_view(a.industry, pages, a.write_model)
         with open(f"out/industry-{a.industry}.md", "w") as f:
-            f.write(view + "\n")
-        print(f"out/industry-{a.industry}.md")
+            f.write(view)
+        print(f"out/industry-{a.industry}.md | cost ${cost or 0:.4f}")
 
 
 if __name__ == "__main__":

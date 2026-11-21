@@ -52,19 +52,22 @@ Bullets only, no headings.
 """
 
 
-def digest(year, notes, model, complete):
-    """Summarize one year's notes. Returns (bullets with valid citations, number dropped, cost)."""
-    prompt = DIGEST_PROMPT.format(year=year, notes=listing(notes))
-    path = os.path.join(CACHE, "digest-" + hashlib.sha1((model + prompt).encode()).hexdigest() + ".json")
+def cached_reply(kind, prompt, model, complete):
+    """Model reply for a prompt, cached on disk by model + prompt. Returns (reply, cost; 0 when cached)."""
+    path = os.path.join(CACHE, f"{kind}-" + hashlib.sha1((model + prompt).encode()).hexdigest() + ".json")
     if os.path.exists(path):
         with open(path) as f:
-            reply, cost = json.load(f)
-    else:
-        reply, usage, _ = complete([{"role": "user", "content": prompt}], model)
-        cost = usage.get("cost")
-        os.makedirs(CACHE, exist_ok=True)
-        with open(path, "w") as f:
-            json.dump([reply, cost], f)
+            return json.load(f)[0], 0
+    reply, usage, _ = complete([{"role": "user", "content": prompt}], model)
+    os.makedirs(CACHE, exist_ok=True)
+    with open(path, "w") as f:
+        json.dump([reply, usage.get("cost")], f)
+    return reply, usage.get("cost")
+
+
+def digest(year, notes, model, complete):
+    """Summarize one year's notes. Returns (bullets with valid citations, number dropped, cost)."""
+    reply, cost = cached_reply("digest", DIGEST_PROMPT.format(year=year, notes=listing(notes)), model, complete)
     bullets = [line.strip() for line in reply.splitlines() if line.lstrip().startswith(("-", "*"))]
     bad = check_citations("\n".join(bullets), {n["id"] for n in notes})
     return [b for b in bullets if b not in bad], len(bad), cost
@@ -103,11 +106,10 @@ def write(company, revenue, notes, stats, model, digest_model, complete):
         digests.append(f"{year}\n" + "\n".join(bullets))
         digest_dropped += bad
         cost += c or 0
-    body, usage, _ = complete([{"role": "user", "content": PROMPT.format(
+    body, write_cost = cached_reply("brief", PROMPT.format(
         name=company["name"], sic=company["sic_description"], today=datetime.date.today().isoformat(),
-        digests="\n\n".join(digests),
-        notes=listing(kept))}], model)
-    cost += usage.get("cost") or 0
+        digests="\n\n".join(digests), notes=listing(kept)), model, complete)
+    cost += write_cost or 0
     by_id = {n["id"]: n for n in notes}
     unsupported = check_citations(body, set(by_id))
     cited = sorted(set(re.findall(r"\[(N\d+)\]", body)) & set(by_id), key=lambda i: int(i[1:]))

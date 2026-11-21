@@ -1,36 +1,35 @@
+# Industry view: railroads (UNP, CSX, NSC)
+
 ## How the industry makes money
-- Revenue is units times revenue per unit: ARC at UNP, RPU at CSX and NSC. Price, mix and fuel surcharges drive the per-unit figure.
-- Surcharges pass fuel cost into revenue with a lag. UNP cites about two months, and NSC says about 95% of its revenue carries negotiated surcharges.
-- CSX also owns a trucking arm (Quality Carriers, 6% of revenue).
-- First-reported 2025 revenue: UNP $24.5B (+1%), CSX $14.1B (-3%), NSC $12.2B (+0.5%).
+- Freight revenue is volume times average revenue per unit. UNP calls it carloads times ARC, and NSC calls it units times RPU. [UNP N541][NSC N481]
+- Fuel surcharges pass fuel cost into revenue. About 95% of NSC revenue is under negotiated surcharges, and UNP's lag is about two months. [NSC N525][UNP N487][CSX N530]
 
 ## Common revenue drivers and KPIs
-- **Volume and mix:** carloads/units, revenue per unit, and ton-miles by commodity group. At UNP, intermodal-heavy volume diluted ARC.
-- **Intermodal:** international follows port volumes, and domestic follows truck tightness. Both CSX and NSC cite tight truck capacity.
-- **Coal:** export follows seaborne prices, and domestic follows natural gas prices.
-- **Fuel:** surcharge revenue and diesel price. Locomotive fuel was up 64% (UNP) and 67% (CSX) in Q3 2026.
-- **Efficiency:** operating ratio (UNP, NSC; CSX now reports operating margin), velocity, dwell, productivity and headcount.
+- Intermodal: international follows port volumes and domestic follows the truck market. UNP international intermodal fell 28% in Q1 2026. [CSX N492][CSX N546][NSC N528][NSC N529][UNP N516]
+- Coal: domestic follows natural gas, and export follows seaborne prices. NSC utility tonnage rose 27% in Q1 2026. [CSX N476][CSX N478][NSC N456][UNP N515]
+- Operating ratio and unit/RPU data: UNP's operating ratio was 59.7% in Q2 2026. [UNP N532][NSC N516][NSC N532][CSX N831]
+- Service KPIs: velocity and dwell. [UNP N519][CSX N550][CSX N551]
 
 ## Where the companies differ
-- **Mix:** UNP is Industrial 37%, Bulk 33%, Premium 30%. CSX is merchandise 62%, intermodal 15%, coal 13%. NSC is merchandise 63%, intermodal 25%, coal 12%.
-- **Geography:** UNP is exposed to West Coast imports and Powder River Basin coal. NSC's international volume fell on East Coast port weakness.
-- **Service trend:** UNP's Q1 2026 velocity rose 9%. CSX's Q3 velocity fell 2% and dwell rose 12%.
-- **Margins:** UNP's operating ratio was 59.7% in Q2 2026. NSC's adjusted ratio was 65.5%.
-- **Idiosyncratic items:** NSC has East Palestine cash payments ($300M in Q1 2026) and costs that may exceed accruals. CSX has Quality Carriers impairments ($108M in 2024, $164M in 2025). UNP and NSC have buybacks paused.
-- **Capital plans:** UNP raised its 2026 plan to about $3.5B, and CSX guides below $2.4B.
+- Mix: CSX 2025 merchandise was $8.8B (62%) and coal $1.9B (13%). UNP 2025 Industrial was about 37%, Bulk about 33% and Premium about 30%. NSC coal is about 12% of revenue. [CSX N461][CSX N463][UNP N469][UNP N468][UNP N470][NSC N455]
+- Trucking: only CSX owns it (Quality Carriers), which took a $164M Q3 2025 impairment. [CSX N464][CSX N417][CSX N404][CSX N456]
+- Service: CSX Q3 2026 velocity fell 2% and dwell rose 12%. UNP Q1 2026 velocity rose 9%. [CSX N550][CSX N551][UNP N519]
+- Merger: UNP and NSC are parties, and both had buybacks paused or suspended. CSX is not a party. [UNP N481][UNP N554][NSC N538][CSX N469]
+- Fuel: CSX Q3 2026 locomotive fuel prices rose 67%. [CSX N554]
 
 ## Catalysts shared across the group
-- **UNP/NSC merger:** a revised STB application is being prepared with no date set. NSC holders would receive one UNP share plus $88.82 in cash. The outside date is January 28, 2028, and a $2.5B termination fee may be owed in some cases. CSX flags it as reshaping competition.
-- **Fuel:** NSC expects both surcharge revenue and fuel expense to rise for the rest of 2026. The two-month lag shifts when UNP recovers the cost.
-- **Regulation:** STB rulemaking on reciprocal switching (UNP) and possible STB limits on pricing freedom (NSC).
-- **Labor:** NSC's moratorium runs to November 1, 2029. Remaining CSX unions are still negotiating.
-- **Tax:** H.R.1 made 100% bonus depreciation permanent (UNP).
+- STB review of the UNP/NSC merger is undated. A revised filing would restart UNP's completeness review. It could reshape CSX's competition. [UNP N482][NSC N467][CSX N469]
+- Fuel: NSC expects fuel surcharge revenue and fuel expense both to rise in the rest of 2026. UNP's Q2 2026 operating ratio was hit by fuel. [NSC N534][NSC N535][UNP N532]
+- Capex: UNP's 2026 plan was raised to about $3.5B from about $3.3B. CSX's is below $2.4B. [UNP N553][UNP N535][CSX N553]
+- Labor: CSX's remaining unions are still negotiating. NSC's moratorium ends November 1, 2029. [CSX N556][NSC N491]
 
 ## Datasets that would cover several companies at once
-- **Port container volumes:** West Coast (UNP), East Coast (NSC) and U.S. ports (CSX). They lead international intermodal.
-- **Weekly diesel prices:** they lead fuel expense and surcharge revenue at all three.
-- **Natural gas prices and seaborne coal indices:** they cover domestic and export coal at all three.
-- **Truckload spot rates and tender rejections:** they cover domestic intermodal (CSX, NSC).
-- **Weekly U.S. rail carloads:** NSC notes these publish before quarterly results.
-- **Vehicle production:** automotive carloads at UNP, CSX and NSC.
-- **Housing starts:** UNP lumber shipments.
+- Port container volumes. Driver: international intermodal. Tickers: UNP, CSX, NSC. [UNP N555][CSX N458][NSC N539]
+- Truckload spot rates and tender rejections. Driver: domestic intermodal. Tickers: CSX, NSC. [CSX N559][NSC N937][NSC N919]
+- Natural gas prices and power-sector coal burn. Driver: domestic coal volume. Tickers: UNP, CSX, NSC. [UNP N525][CSX N514][NSC N450]
+- Seaborne coal price indices. Driver: export coal revenue per unit. Tickers: CSX, NSC. [CSX N542][NSC N524]
+- Weekly U.S. diesel prices. Driver: fuel cost and surcharge revenue. Tickers: UNP, CSX. [UNP N540][CSX N558]
+
+## Assumed, not verified
+
+- A citation shows the bullet points at a note in that company's brief; it does not show the bullet reads the brief correctly.
