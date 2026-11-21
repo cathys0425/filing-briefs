@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 compare.json
 .env
+results.jsonl
+data/
+out/

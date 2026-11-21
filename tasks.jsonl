@@ -1,0 +1,3 @@
+{"id": "math-1", "prompt": "A stock rises 10% then falls 10%. What is the total percentage change? Answer with just the number and a % sign.", "expected": "-1%"}
+{"id": "fin-1", "prompt": "Revenue is 200, COGS is 120, operating expenses are 50. What is the operating margin? Answer with just the percentage.", "expected": "15%"}
+{"id": "extract-1", "prompt": "Extract the ticker from this sentence and answer with the ticker only: 'Shares of Nvidia (NVDA) rose 3% after earnings.'", "expected": "NVDA"}
