@@ -10,7 +10,7 @@ The reading is done by fixed code in `coverage/`. Your job is to run it, check t
 ## Before running
 
 1. `SEC_USER_AGENT` must be set to a declared client string (SEC requires a name and contact). If it is not set, ask the user for the value; never invent a contact.
-2. Earnings call transcripts are not on EDGAR. If the user has them, they go in `data/transcripts/<TICKER>/<YYYY-MM-DD>.txt` (the date is the call date). Public transcripts only; never firm-licensed text.
+2. Earnings call transcripts are fetched automatically from a public dataset (US large caps, 2005 to May 2025). Later calls can be added by the user as `data/transcripts/<TICKER>/<YYYY-MM-DD>.txt` (the date is the call date). Public transcripts only; never firm-licensed text.
 3. Ask which models to use if not given: a cheap one for `-e` (reads every document) and a stronger one for `-w` (writes the brief). State the expected number of documents before starting a long run.
 
 ## Run

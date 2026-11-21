@@ -31,7 +31,7 @@ python3 orc.py models --free
 
 ## Company and industry coverage (`coverage/`)
 
-Reads a company's 10-K and 10-Q filings from SEC EDGAR (and earnings call transcripts you supply), and writes a one-page brief: business model, revenue build-up, core thesis, catalysts, KPIs, useful datasets.
+Reads a company's 10-K and 10-Q filings from SEC EDGAR and its earnings call transcripts from a public Hugging Face dataset (US large caps, 2005 to May 2025), and writes a one-page brief: business model, revenue build-up, core thesis, catalysts, KPIs, useful datasets.
 
 ```bash
 export SEC_USER_AGENT="Your Name your@email"   # SEC requires a declared client
@@ -46,4 +46,4 @@ How correctness is checked:
 - Every bullet in the brief must cite note ids; bullets without a valid citation are listed under "Assumed, not verified".
 - Revenue history comes from XBRL as first reported, with the date it became public. The model never produces these numbers.
 
-Not covered yet: 8-K earnings releases, foreign filers (20-F), segment revenue tables. Transcripts are read only from `data/transcripts/<TICKER>/<YYYY-MM-DD>.txt`.
+Not covered yet: 8-K earnings releases, foreign filers (20-F), segment revenue tables, earnings calls after May 2025 (add them yourself as `data/transcripts/<TICKER>/<YYYY-MM-DD>.txt`).

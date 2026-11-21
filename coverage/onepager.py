@@ -74,6 +74,7 @@ def write(company, revenue, notes, stats, model, complete):
     out += ["", "## Checks not done", "",
             f"- {left_out} older notes were not shown to the writer (limit {PER_CATEGORY} per category)."]
     out += [f"- Not read: {f}" for f in stats["failures"]]
-    out += [f"- Earnings call transcripts read: {stats['transcripts']}. 8-K earnings releases are not read yet.",
+    out += [f"- Earnings call transcripts read: {stats['transcripts']} (dataset ends May 2025; later calls are missing). "
+                 "8-K earnings releases are not read yet.",
             "- No comparison against consensus, price, or peers."]
     return "\n".join(out) + "\n", usage.get("cost")

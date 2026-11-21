@@ -25,17 +25,20 @@ def get(url):
     if os.path.exists(path):
         with open(path, "rb") as f:
             return f.read()
-    time.sleep(0.15)
     req = urllib.request.Request(url, headers={"User-Agent": UA})
-    try:
-        with urllib.request.urlopen(req, timeout=60) as r:
-            body = r.read()
-    except urllib.error.HTTPError as e:
-        if e.code == 403 and "www.sec.gov" in url:
-            raise RuntimeError(
-                f"SEC refused {url} (403). Set SEC_USER_AGENT to a declared client, "
-                "e.g. 'Your Name your@email', as SEC requires.") from None
-        raise
+    for attempt in range(4):
+        time.sleep(0.15 if attempt == 0 else 10)
+        try:
+            with urllib.request.urlopen(req, timeout=90) as r:
+                body = r.read()
+            break
+        except urllib.error.HTTPError as e:
+            if e.code == 403 and "www.sec.gov" in url:
+                raise RuntimeError(
+                    f"SEC refused {url} (403). Set SEC_USER_AGENT to a declared client, "
+                    "e.g. 'Your Name your@email', as SEC requires.") from None
+            if e.code < 500 or attempt == 3:  # 5xx is retried: the dataset API returns 500 while its index loads
+                raise
     os.makedirs(CACHE, exist_ok=True)
     with open(path, "wb") as f:
         f.write(body)

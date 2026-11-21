@@ -2,7 +2,8 @@
 
 Per company it writes out/<TICKER>.md and out/<TICKER>.notes.json. With --industry it also
 writes out/industry-<NAME>.md from the company briefs.
-Earnings call transcripts are read from data/transcripts/<TICKER>/<YYYY-MM-DD>.txt if present.
+Earnings call transcripts are fetched from a public Hugging Face dataset into
+data/transcripts/<TICKER>/<YYYY-MM-DD>.txt; files you add there yourself are read too.
 """
 import argparse
 import collections
@@ -10,7 +11,7 @@ import glob
 import json
 import os
 
-from coverage import edgar, extract, onepager, text
+from coverage import edgar, extract, onepager, text, transcripts
 from orc import APIError, complete
 
 INDUSTRY_PROMPT = """These are one-page briefs for companies in one industry: {name}.
@@ -43,6 +44,11 @@ def cover(ticker, since, extract_model, write_model, complete=complete):
     cik = edgar.cik_for(ticker)
     company = edgar.company(cik)
     notes, failures, dropped, cost = [], [], 0, 0.0
+    found, short = transcripts.fetch(ticker)
+    if not found:
+        failures.append("earnings calls: ticker not in the transcript dataset")
+    if short:
+        failures.append(f"earnings calls: {short} transcripts are under {transcripts.SHORT} characters and may be cut off")
     forms, filed = collections.Counter(), []
     for label, form, day, body in documents(ticker, cik, since):
         if body is None:

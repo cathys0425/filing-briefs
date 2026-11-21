@@ -69,6 +69,7 @@ class PipelineTests(unittest.TestCase):
                     "later_differing_values": 0}]
         with tempfile.TemporaryDirectory() as d, \
                 mock.patch.object(extract, "CACHE", d), \
+                mock.patch.object(run.transcripts, "fetch", return_value=(0, 0)), \
                 mock.patch.object(run.edgar, "cik_for", return_value="0000000001"), \
                 mock.patch.object(run.edgar, "company", return_value={
                     "cik": "1", "name": "Widget Co", "tickers": ["WDGT"], "sic": "1", "sic_description": "Widgets"}), \
@@ -83,6 +84,7 @@ class PipelineTests(unittest.TestCase):
                 os.chdir(cwd)
         self.assertIn("| 2025-12-31 | 5,000 | 2026-02-01 | 0 |", page)
         self.assertIn("1 notes whose quote was found verbatim", page)
+        self.assertIn("Not read: earnings calls: ticker not in the transcript dataset", page)
         self.assertIn("3 notes dropped", page)  # one fabricated note per section
         self.assertIn("Bullet without a valid citation: - Unsupported bullet", page)
         self.assertIn('N1 (10-K 2025-12-31 Item 1 Business): "We sell widgets', page)
