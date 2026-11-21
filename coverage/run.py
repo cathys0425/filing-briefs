@@ -54,6 +54,10 @@ def cover(ticker, since, extract_model, write_model, complete=complete):
         if body is None:
             failures.append(f"{label}: section not found")
             continue
+        if form != "call" and len(body) < text.MIN_SECTION:
+            failures.append(f"{label}: only {len(body)} characters under this heading "
+                            "(cross-reference or incorporation by reference, not the section text)")
+            continue
         forms[form] += 1
         filed.append(day)
         for i, chunk in enumerate(text.chunks(body)):

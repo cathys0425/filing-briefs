@@ -4,11 +4,15 @@ import re
 
 # Sections read per form type: (label, start marker, markers that end it).
 SECTIONS = {
-    "10-K": [("Item 1 Business", r"item\s+1\.", [r"item\s+1a\.", r"item\s+1b\.", r"item\s+2\."]),
-             ("Item 1A Risk Factors", r"item\s+1a\.", [r"item\s+1b\.", r"item\s+1c\.", r"item\s+2\."]),
-             ("Item 7 MD&A", r"item\s+7\.", [r"item\s+7a\.", r"item\s+8\."])],
-    "10-Q": [("Item 2 MD&A", r"item\s+2\.", [r"item\s+3\.", r"item\s+4\."])],
+    "10-K": [("Item 1 Business", r"item\s+1[.:]", [r"item\s+1a[.:]", r"item\s+1b[.:]", r"item\s+2[.:]"]),
+             ("Item 1A Risk Factors", r"item\s+1a[.:]", [r"item\s+1b[.:]", r"item\s+1c[.:]", r"item\s+2[.:]"]),
+             ("Item 7 MD&A", r"item\s+7[.:]", [r"item\s+7a[.:]", r"item\s+8[.:]"])],
+    "10-Q": [("Item 2 MD&A", r"item\s+2[.:]", [r"item\s+3[.:]", r"item\s+4[.:]"])],
 }
+# A shorter span is not the section text: it is an entry in a cross-reference index
+# ("Item 1A. Risk Factors / Pages 31-46", filings whose body has no item headings) or a
+# sentence incorporating the section by reference. It is reported as not read.
+MIN_SECTION = 2000
 
 
 class _Text(html.parser.HTMLParser):
