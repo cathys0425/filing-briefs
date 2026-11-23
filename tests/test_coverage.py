@@ -114,6 +114,49 @@ class WordLimitTests(unittest.TestCase):
         self.assertEqual((body, cost, length, len(calls)), ("- short [N1]", 0.01, 2, 1))
 
 
+class BatchTests(unittest.TestCase):
+    GOOD = '[{"category": "risk", "claim": "c", "quote": "A single customer accounted for 42% of net sales"}]'
+
+    def result(self, key, content):
+        return {"custom_id": key, "error": None,
+                "response": {"body": {"choices": [{"message": {"content": content}}]}}}
+
+    def test_batch_fills_the_cache_and_resumes_instead_of_resubmitting(self):
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(extract, "CACHE", d):
+            good, _ = extract.request("doc A", RISK, "m")
+            bad, _ = extract.request("doc B", RISK, "m")
+            failed, _ = extract.request("doc C", RISK, "m")
+            pending = {p: "prompt for " + p for p in (good, bad, failed)}
+            submitted, polls = [], []
+
+            def submit(model, bodies):
+                submitted.append(bodies)
+                return "batch_1"
+
+            def get(batch_id):
+                polls.append(batch_id)
+                if len(polls) == 1:
+                    raise KeyboardInterrupt  # the run is interrupted while waiting
+                keys = list(submitted[0])
+                return {"status": "completed", "usage": {"cost": 0.5}, "results": [
+                    self.result(keys[0], self.GOOD), self.result(keys[1], "not json"),
+                    {"custom_id": keys[2], "response": None, "error": {"message": "boom"}}]}
+
+            with self.assertRaises(KeyboardInterrupt):
+                extract.batch(pending, "m", submit, get, wait=0)
+            self.assertTrue(os.path.exists(os.path.join(d, extract.PENDING)))
+            self.assertEqual(extract.batch(pending, "m", submit, get, wait=0), (1, 2, 0.5))
+            self.assertEqual(len(submitted), 1)  # the second run collected the same batch
+            self.assertFalse(os.path.exists(os.path.join(d, extract.PENDING)))
+            self.assertEqual([os.path.exists(p) for p in (good, bad, failed)], [True, False, False])
+            cached = extract.extract("doc A", RISK, "m", complete=None)  # served from the cache, no model call
+            self.assertEqual((len(cached["notes"]), cached["cost"]), (1, 0))
+
+    def test_nothing_pending_submits_nothing(self):
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(extract, "CACHE", d):
+            self.assertEqual(extract.batch({}, "m", None, None), (0, 0, 0.0))
+
+
 class VerifyTests(unittest.TestCase):
     def test_fabricated_quote_is_dropped(self):
         real = {"category": "risk", "claim": "c", "quote": "A single customer accounted for 42% of net sales"}
