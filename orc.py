@@ -92,7 +92,14 @@ def batch_submit(model, bodies):
 
 def batch_get(batch_id):
     """The batch as OpenRouter reports it: status, request_counts, usage and, once completed, results."""
-    return call(f"/batches/{batch_id}")
+    for attempt in range(6):
+        try:
+            return call(f"/batches/{batch_id}")
+        except APIError as e:
+            # A batch can read as "not found" for some seconds after the submit returned its id (observed).
+            if "HTTP 404" not in str(e) or attempt == 5:
+                raise
+            time.sleep(20)
 
 
 def build_messages(prompt, system):

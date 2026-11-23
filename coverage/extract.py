@@ -119,7 +119,7 @@ def batch(pending, model, submit, get, wait=60):
         # a completed batch can briefly report results as null while they are written
         if b["status"] in FINAL and (b["status"] != "completed" or b["results"] is not None):
             break
-        print(f"Batch {batch_id}: {b['status']} {b.get('request_counts')}")
+        print(f"Batch {batch_id}: {b['status']} {b.get('request_counts')}", flush=True)
         time.sleep(wait)
     os.remove(state)
     if b["status"] != "completed":
