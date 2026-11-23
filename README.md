@@ -161,7 +161,7 @@ python3 orc.py models --free
 python3 harness.py -m recursive/flint-v1.0:free nvidia/nemotron-3.5-lightning:free
 ```
 
-Runs every task in `tasks.jsonl` against every model and writes one raw row per pair to `results.jsonl`: output, expected answer, latency, tokens and cost. There is no scoring yet, the three tasks are a smoke test rather than ground truth, and nine known defects are listed in [pull request 2](https://github.com/cathys0425/openrouter-mvp/pull/2).
+Runs every task in `tasks.jsonl` against every model and writes one raw row per pair to `results.jsonl`: output, expected answer, latency, tokens and cost. There is no scoring yet, the three tasks are a smoke test rather than ground truth, and nine known defects are listed in [pull request 2](https://github.com/cathys0425/filing-briefs/pull/2).
 
 ### Claude Code components (`.claude/`)
 
