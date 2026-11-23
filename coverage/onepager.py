@@ -8,12 +8,21 @@ import re
 CACHE = os.environ.get("COVERAGE_CACHE", "data/cache")
 
 PER_CATEGORY = 40  # newest notes kept per category for the writer; the rest are counted, not hidden
+WORD_LIMIT = 450   # brief body, not counting citation ids
+
+SHORTEN_PROMPT = """This text is {words} words; shorten it to at most {limit} words (citation ids in
+square brackets do not count). Keep every section heading. Drop the least important bullets and
+tighten wording; do not add facts. Every remaining bullet keeps its citation ids exactly as written.
+Return only the shortened text.
+
+{text}
+"""
 
 PROMPT = """Write a one-page company brief for a systematic long/short equity researcher.
 Use ONLY the year digests and numbered notes below. Every bullet must end with the ids of the
 notes it rests on, like [N12] or [N3][N40]; ids that appear in a digest bullet may be cited.
 Do not state anything the notes do not support. No filler words such as "promising".
-At most 450 words. Markdown, exactly these sections:
+At most 450 words, not counting citation ids. Markdown, exactly these sections:
 
 ## Business model
 ## Revenue build-up
@@ -65,6 +74,20 @@ def cached_reply(kind, prompt, model, complete):
     return reply, usage.get("cost")
 
 
+def words(text):
+    """Word count without citation ids."""
+    return len(re.sub(r"\[[^\]]*\]", "", text).split())
+
+
+def fit(text, limit, model, complete):
+    """Ask the model once to shorten a text that is over the limit. Returns (text, cost, word count)."""
+    if words(text) <= limit:
+        return text, 0, words(text)
+    shorter, cost = cached_reply("shorten", SHORTEN_PROMPT.format(words=words(text), limit=limit, text=text),
+                                 model, complete)
+    return shorter, cost, words(shorter)
+
+
 def digest(year, notes, model, complete):
     """Summarize one year's notes. Returns (bullets with valid citations, number dropped, cost)."""
     reply, cost = cached_reply("digest", DIGEST_PROMPT.format(year=year, notes=listing(notes)), model, complete)
@@ -109,7 +132,8 @@ def write(company, revenue, notes, stats, model, digest_model, complete):
     body, write_cost = cached_reply("brief", PROMPT.format(
         name=company["name"], sic=company["sic_description"], today=datetime.date.today().isoformat(),
         digests="\n\n".join(digests), notes=listing(kept)), model, complete)
-    cost += write_cost or 0
+    body, fit_cost, length = fit(body, WORD_LIMIT, model, complete)
+    cost += (write_cost or 0) + (fit_cost or 0)
     by_id = {n["id"]: n for n in notes}
     unsupported = check_citations(body, set(by_id))
     cited = sorted(set(re.findall(r"\[(N\d+)\]", body)) & set(by_id), key=lambda i: int(i[1:]))
@@ -133,9 +157,10 @@ def write(company, revenue, notes, stats, model, digest_model, complete):
             f"- {left_out} older notes reached the writer only through {len(digests)} year digests "
             f"(limit {PER_CATEGORY} full notes per category); {digest_dropped} digest bullets were dropped "
             "for lacking a valid citation."]
+    if length > WORD_LIMIT:
+        out.append(f"- The brief is {length} words, over the {WORD_LIMIT}-word limit, after one request to shorten it.")
     out += [f"- Not read: {f}" for f in stats["failures"]]
     out += [f"- Earnings call transcripts read: {stats['transcripts']} "
-            "(dataset ends May 2025; later calls are missing). "
-                 "8-K earnings releases are not read yet.",
+            "(dataset ends May 2025; later quarters are covered by 8-K earnings releases, not calls).",
             "- No comparison against consensus, price, or peers."]
     return "\n".join(out) + "\n", cost

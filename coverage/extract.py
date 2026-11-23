@@ -64,12 +64,12 @@ def verify(notes, source):
 
 
 def extract(label, text, model, complete):
-    """Notes for one chunk, cached on disk by model + prompt + text."""
+    """Notes for one chunk, cached on disk by model + prompt + text. `cost` is 0 when served from the cache."""
     prompt = PROMPT.format(categories=CATEGORIES, label=label, text=text)
     path = os.path.join(CACHE, "notes-" + hashlib.sha1((model + prompt).encode()).hexdigest() + ".json")
     if os.path.exists(path):
         with open(path) as f:
-            return json.load(f)
+            return {"notes": json.load(f)["notes"], "cost": 0}
     reply, usage, _ = complete([{"role": "user", "content": prompt}], model)
     result = {"notes": parse_notes(reply), "cost": usage.get("cost")}
     os.makedirs(CACHE, exist_ok=True)

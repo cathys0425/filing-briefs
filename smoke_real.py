@@ -71,7 +71,7 @@ def main():
         print(f"{'ok  ' if ok else 'FAIL'} {ticker} XBRL revenue: {len(revenue)} fiscal years")
         if not ok:
             failures.append(f"{ticker} XBRL revenue: {len(revenue)} fiscal years")
-    found, _ = transcripts.fetch("KO")
+    found = transcripts.fetch("KO")
     ok = found >= 70
     print(f"{'ok  ' if ok else 'FAIL'} KO transcripts in dataset: {found}")
     if not ok:
