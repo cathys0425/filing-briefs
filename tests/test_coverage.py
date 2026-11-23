@@ -79,6 +79,41 @@ class TextTests(unittest.TestCase):
         self.assertIsNone(text.section("no headings here", r"item\s+7\.", [r"item\s+8\."]))
 
 
+class TableTests(unittest.TestCase):
+    def test_table_cells_do_not_run_together(self):
+        row = "<table><tr><td>Number of retail stores</td><td>1,761</td><td>1,753</td></tr></table>"
+        self.assertIn("Number of retail stores 1,761 1,753", " ".join(text.html_to_text(row).split()))
+
+
+class ReleaseTests(unittest.TestCase):
+    def test_exhibit_99_is_found_in_the_filing_index(self):
+        index = (b'<table><tr><td>1</td><td>8-K</td><td><a href="/ix?doc=/Archives/edgar/data/1/a/k.htm">k.htm</a></td>'
+                 b'<td>8-K</td><td>9</td></tr><tr><td>2</td><td>EX-99.1</td>'
+                 b'<td><a href="/Archives/edgar/data/1/a/ex991.htm">ex991.htm</a></td>'
+                 b'<td>EX-99.1</td><td>9</td></tr></table>')
+        base = {"form": "8-K", "period": "", "url": "k"}
+        rows = [{**base, "accession": "0-0-1", "filed": "2026-02-01", "items": "2.02,9.01"},
+                {**base, "accession": "0-0-2", "filed": "2026-03-01", "items": "8.01"}]
+        with mock.patch.object(run.edgar, "filings", return_value=rows), \
+                mock.patch.object(run.edgar, "get", return_value=index):
+            found = run.edgar.earnings_releases("0000000001", "2020-01-01")
+        self.assertEqual([f["url"] for f in found], ["https://www.sec.gov/Archives/edgar/data/1/a/ex991.htm"])
+
+
+class WordLimitTests(unittest.TestCase):
+    def test_over_limit_text_is_shortened_once_and_counted_without_citations(self):
+        calls = []
+
+        def fake(messages, model):
+            calls.append(messages[0]["content"])
+            return "- short [N1]", {"cost": 0.01}, 0.1
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(onepager, "CACHE", d):
+            self.assertEqual(onepager.fit("- a b c [N1][N2]", 4, "m", fake), ("- a b c [N1][N2]", 0, 4))
+            self.assertEqual(calls, [])
+            body, cost, length = onepager.fit("- one two three four five [N1]", 4, "m", fake)
+        self.assertEqual((body, cost, length, len(calls)), ("- short [N1]", 0.01, 2, 1))
+
+
 class VerifyTests(unittest.TestCase):
     def test_fabricated_quote_is_dropped(self):
         real = {"category": "risk", "claim": "c", "quote": "A single customer accounted for 42% of net sales"}
@@ -144,7 +179,8 @@ class PipelineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d, \
                 mock.patch.object(extract, "CACHE", d), \
                 mock.patch.object(onepager, "CACHE", d), \
-                mock.patch.object(run.transcripts, "fetch", return_value=(0, 0)), \
+                mock.patch.object(run.transcripts, "fetch", return_value=0), \
+                mock.patch.object(run.edgar, "earnings_releases", return_value=[]), \
                 mock.patch.object(run.edgar, "cik_for", return_value="0000000001"), \
                 mock.patch.object(run.edgar, "company", return_value={
                     "cik": "1", "name": "Widget Co", "tickers": ["WDGT"], "sic": "1", "sic_description": "Widgets"}), \
@@ -185,7 +221,8 @@ class PipelineTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as d, \
                 mock.patch.object(extract, "CACHE", d), \
-                mock.patch.object(run.transcripts, "fetch", return_value=(0, 0)), \
+                mock.patch.object(run.transcripts, "fetch", return_value=0), \
+                mock.patch.object(run.edgar, "earnings_releases", return_value=[]), \
                 mock.patch.object(run.edgar, "cik_for", return_value="0000000001"), \
                 mock.patch.object(run.edgar, "company", return_value={
                     "cik": "1", "name": "Widget Co", "tickers": ["WDGT"], "sic": "1", "sic_description": "Widgets"}), \

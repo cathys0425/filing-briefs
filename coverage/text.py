@@ -29,6 +29,8 @@ class _Text(html.parser.HTMLParser):
             self.skip += 1
         if tag in self.BLOCK:
             self.parts.append("\n")
+        if tag in ("td", "th"):
+            self.parts.append(" ")  # adjacent cells otherwise run together: "stores1,761 1,753"
 
     def handle_endtag(self, tag):
         if tag in ("script", "style"):

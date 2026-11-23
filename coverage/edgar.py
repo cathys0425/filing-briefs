@@ -10,6 +10,7 @@ Assumptions (source: SEC developer docs unless marked otherwise):
 import hashlib
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
@@ -81,6 +82,29 @@ def filings(cik, forms, since):
                            f"{acc.replace('-', '')}/{p['primaryDocument'][i]}",
                 })
     return sorted(out, key=lambda f: f["filed"])
+
+
+def earnings_releases(cik, since):
+    """Earnings press releases: the EX-99 exhibit of each 8-K reporting Item 2.02 (results of operations).
+
+    Returns filings as in `filings`, with `url` pointing at the exhibit. An 8-K whose index
+    lists no EX-99 exhibit is returned with url None so the caller can report it.
+    """
+    out = []
+    for f in filings(cik, ["8-K"], since):
+        if "2.02" not in f["items"].split(","):
+            continue
+        acc = f["accession"]
+        index = get(f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc.replace('-', '')}/{acc}-index.htm")
+        url = None
+        for row in re.findall(r"<tr[^>]*>(.*?)</tr>", index.decode("utf-8", "replace"), flags=re.S):
+            cells = [re.sub(r"<[^>]+>", "", c).strip() for c in re.findall(r"<td[^>]*>(.*?)</td>", row, flags=re.S)]
+            href = re.search(r'href="(/Archives/[^"]+)"', row)
+            if href and len(cells) > 3 and cells[3].startswith("EX-99"):
+                url = "https://www.sec.gov" + href.group(1)
+                break
+        out.append({**f, "url": url})
+    return out
 
 
 def annual_revenue(cik):

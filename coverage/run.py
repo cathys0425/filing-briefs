@@ -32,11 +32,16 @@ state them, with their period. At most 400 words.
 """
 
 
+INDUSTRY_WORD_LIMIT = 400  # not counting citation ids
+
+
 def industry_view(name, pages, model, complete=complete):
     """Industry view from company briefs {ticker: page}. Returns (markdown, cost)."""
     bodies = {t: p.split("## Revenue as first reported")[0] for t, p in pages.items()}
     briefs = "\n\n".join(f"=== {t} ===\n{b}" for t, b in bodies.items())
     view, cost = onepager.cached_reply("industry", INDUSTRY_PROMPT.format(name=name, briefs=briefs), model, complete)
+    view, fit_cost, length = onepager.fit(view, INDUSTRY_WORD_LIMIT, model, complete)
+    cost = (cost or 0) + (fit_cost or 0)
     valid = {f"{t} {i}" for t, b in bodies.items() for i in re.findall(r"\[(N\d+)\]", b)}
     bad = []
     for line in view.splitlines():
@@ -49,15 +54,21 @@ def industry_view(name, pages, model, complete=complete):
            "- A citation shows the bullet points at a note in that company's brief; it does not show the "
            "bullet reads the brief correctly."]
     out += [f"- Bullet without a valid citation for every company it names: {b}" for b in bad]
+    if length > INDUSTRY_WORD_LIMIT:
+        out.append(f"- The view is {length} words, over the {INDUSTRY_WORD_LIMIT}-word limit, "
+                   "after one request to shorten it.")
     return "\n".join(out) + "\n", cost
 
 
 def documents(ticker, cik, since):
-    """Yield (label, form, filed, text or None). None means the section was not found."""
+    """Yield (label, form, filed, text or None). None means the section or exhibit was not found."""
     for f in edgar.filings(cik, ["10-K", "10-Q"], since):
         body = text.html_to_text(edgar.get(f["url"]).decode("utf-8", "replace"))
         for label, start, ends in text.SECTIONS[f["form"]]:
             yield f"{f['form']} {f['period']} {label}", f["form"], f["filed"], text.section(body, start, ends)
+    for f in edgar.earnings_releases(cik, since):
+        body = text.html_to_text(edgar.get(f["url"]).decode("utf-8", "replace")) if f["url"] else None
+        yield f"8-K earnings release {f['filed']}", "8-K", f["filed"], body
     for path in sorted(glob.glob(f"data/transcripts/{ticker}/*.txt")):
         day = os.path.basename(path)[:-4]
         if day >= since:
@@ -69,16 +80,15 @@ def cover(ticker, since, extract_model, write_model, complete=complete):
     cik = edgar.cik_for(ticker)
     company = edgar.company(cik)
     notes, failures, dropped, cost = [], [], 0, 0.0
-    found, short = transcripts.fetch(ticker)
-    if not found:
+    if not transcripts.fetch(ticker):
         failures.append("earnings calls: ticker not in the transcript dataset")
-    if short:
-        failures.append(f"earnings calls: {short} transcripts are under {transcripts.SHORT} characters "
-                        "and may be cut off")
     forms, filed = collections.Counter(), []
     for label, form, day, body in documents(ticker, cik, since):
         if body is None:
-            failures.append(f"{label}: section not found")
+            failures.append(f"{label}: section or exhibit not found")
+            continue
+        if form == "call" and len(body) < transcripts.SHORT:
+            failures.append(f"{label}: transcript is only {len(body)} characters (empty or cut off)")
             continue
         if form != "call" and len(body) < text.MIN_SECTION:
             failures.append(f"{label}: only {len(body)} characters under this heading "
@@ -101,7 +111,8 @@ def cover(ticker, since, extract_model, write_model, complete=complete):
         raise RuntimeError(f"{ticker}: no verified notes. Failures: {failures}")
     for i, n in enumerate(notes, 1):
         n["id"] = f"N{i}"
-    stats = {"docs": sum(forms.values()), "by_form": dict(forms), "first": min(filed), "last": max(filed),
+    stats = {"docs": sum(forms.values()), "by_form": dict(sorted(forms.items())),
+             "first": min(filed), "last": max(filed),
              "dropped": dropped, "failures": failures, "transcripts": forms["call"]}
     page, write_cost = onepager.write(company, edgar.annual_revenue(cik), notes, stats, write_model,
                                       extract_model, complete)
@@ -110,7 +121,8 @@ def cover(ticker, since, extract_model, write_model, complete=complete):
         f.write(page)
     with open(f"out/{ticker}.notes.json", "w") as f:
         json.dump(notes, f, indent=1)
-    print(f"{ticker}: out/{ticker}.md | cost ${cost + (write_cost or 0):.4f} | {len(failures)} failures")
+    print(f"{ticker}: out/{ticker}.md | new spend ${cost + (write_cost or 0):.4f} "
+          f"(cached steps cost nothing) | {len(failures)} not read")
     return page
 
 

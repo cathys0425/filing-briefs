@@ -12,11 +12,11 @@ import urllib.parse
 from coverage.edgar import get
 
 API = "https://datasets-server.huggingface.co/filter"
-SHORT = 5000  # characters; a full call is typically 40,000+
+SHORT = 5000  # characters; a full call is typically 40,000+, and the dataset holds some 11-character stubs
 
 
 def fetch(ticker):
-    """Write data/transcripts/<TICKER>/<YYYY-MM-DD>.txt for every call in the dataset. Returns (count, short count)."""
+    """Write data/transcripts/<TICKER>/<YYYY-MM-DD>.txt for every call in the dataset. Returns the count."""
     rows, offset = [], 0
     while True:
         q = urllib.parse.urlencode({"dataset": "kurry/sp500_earnings_transcripts", "config": "default",
@@ -37,6 +37,5 @@ def fetch(ticker):
     for r in rows:
         with open(f"data/transcripts/{ticker}/{r['date'][:10]}.txt", "w") as f:
             f.write(r["content"])
-    short = sum(len(r["content"]) < SHORT for r in rows)
-    print(f"{ticker}: {len(rows)} transcripts in dataset, {short} shorter than {SHORT} characters")
-    return len(rows), short
+    print(f"{ticker}: {len(rows)} transcripts in dataset")
+    return len(rows)
