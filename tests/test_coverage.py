@@ -63,6 +63,18 @@ class TextTests(unittest.TestCase):
         label, start, ends = text.SECTIONS["10-K"][1]
         self.assertEqual(text.section(body, start, ends), "Item 1A: Risk Factors\nDemand is cyclical.\n")
 
+    def test_dash_headings(self):
+        # Costco writes "Item 1—Business", Lowe's "Item 1 - Business"; the contents still use "Item 1."
+        for dash in ("\u2014", " - "):
+            doc = ("<p>Item 1.</p><p>Business</p><p>Item 1A.</p><p>Risk Factors</p><p>Item 2.</p>"
+                   f"<p>Item 1{dash}Business</p><p>{BUSINESS}</p><p>Item 1A{dash}Risk Factors</p><p>{RISK}</p>"
+                   f"<p>Item 1B{dash}Unresolved</p><p>Item 2{dash}Properties</p>")
+            body = text.html_to_text(doc)
+            label, start, ends = text.SECTIONS["10-K"][0]
+            self.assertIn("annual contracts", text.section(body, start, ends))
+            label, start, ends = text.SECTIONS["10-K"][1]
+            self.assertIn("42%", text.section(body, start, ends))
+
     def test_missing_section_is_none(self):
         self.assertIsNone(text.section("no headings here", r"item\s+7\.", [r"item\s+8\."]))
 

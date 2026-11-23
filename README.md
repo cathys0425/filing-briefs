@@ -51,6 +51,6 @@ How correctness is checked:
 - Sections shorter than 2,000 characters are reported as not read instead of being sent to the model.
 - Revenue history comes from XBRL as first reported, with the date it became public. The model never produces these numbers.
 
-Example output is in `examples/` (KO, three railroads, eleven semiconductor companies, two industry views).
+Example output is in `examples/` (KO, three railroads, eleven semiconductor companies, five big-box retailers, three industry views).
 
 Not covered yet: 8-K earnings releases, foreign filers (20-F), segment revenue tables, filings that list items only in a page index (Intel), earnings calls after May 2025 (add them yourself as `data/transcripts/<TICKER>/<YYYY-MM-DD>.txt`).

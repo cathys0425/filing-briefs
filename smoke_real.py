@@ -6,7 +6,8 @@
 Downloads the latest 10-K and 10-Q of a few companies from SEC and checks that every
 section is found with a plausible length, that XBRL revenue is returned, and that the
 transcript dataset still answers. The companies are the ones whose filing layouts broke
-sectioning before (KO cross-references, CSX running page headers, AMAT colon headings)
+sectioning before (KO cross-references, CSX running page headers, AMAT colon headings,
+COST dash headings)
 plus UNP as a plain case. The model check extracts notes from KO's latest 10-Q MD&A and
 fails if the reply is not valid JSON, too few notes survive quote verification, or too many
 are dropped. Needs SEC_USER_AGENT (and an OpenRouter key for the model check); the cache is
@@ -16,7 +17,7 @@ import os
 import sys
 import tempfile
 
-TICKERS = ["KO", "UNP", "CSX", "AMAT"]
+TICKERS = ["KO", "UNP", "CSX", "AMAT", "COST"]
 MIN_CHARS = 10000   # shortest real section seen so far is about 12,000 (TXN 10-Q MD&A)
 MAX_CHARS = 400000  # a section this long has swallowed its neighbours
 MODEL = "anthropic/claude-haiku-5.5"  # the extract model used for the example briefs
