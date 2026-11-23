@@ -83,7 +83,8 @@ def fit(text, limit, model, complete):
     """Ask the model once to shorten a text that is over the limit. Returns (text, cost, word count)."""
     if words(text) <= limit:
         return text, 0, words(text)
-    shorter, cost = cached_reply("shorten", SHORTEN_PROMPT.format(words=words(text), limit=limit, text=text),
+    # Ask for 10% under the limit: models asked for "at most N words" tend to land slightly over.
+    shorter, cost = cached_reply("shorten", SHORTEN_PROMPT.format(words=words(text), limit=int(limit * 0.9), text=text),
                                  model, complete)
     return shorter, cost, words(shorter)
 

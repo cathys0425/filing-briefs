@@ -31,7 +31,7 @@ python3 orc.py models --free
 
 ## Company and industry coverage (`coverage/`)
 
-Reads a company's 10-K and 10-Q filings from SEC EDGAR and its earnings call transcripts from a public Hugging Face dataset (US large caps, 2005 to May 2025), and writes a one-page brief: business model, revenue build-up, core thesis, catalysts, KPIs, useful datasets.
+Reads a company's 10-K and 10-Q filings and 8-K earnings press releases from SEC EDGAR and its earnings call transcripts from a public Hugging Face dataset (US large caps, 2005 to May 2025), and writes a one-page brief: business model, revenue build-up, core thesis, catalysts, KPIs, useful datasets.
 
 ```bash
 export SEC_USER_AGENT="Your Name your@email"   # SEC requires a declared client
@@ -48,9 +48,10 @@ How correctness is checked:
 - Each year's notes are condensed into cited digest bullets so older history reaches the brief; digest bullets without a valid citation are dropped.
 - Every bullet in the brief must cite note ids; bullets without a valid citation are listed under "Assumed, not verified".
 - Every industry-view bullet must cite a note from the brief of each company it names; the rest are listed under "Assumed, not verified".
-- Sections shorter than 2,000 characters are reported as not read instead of being sent to the model.
+- Sections shorter than 2,000 characters and call transcripts shorter than 5,000 are reported as not read instead of being sent to the model.
+- A brief over 450 words (an industry view over 400), not counting citation ids, gets one request to shorten; if it is still over, the page says so.
 - Revenue history comes from XBRL as first reported, with the date it became public. The model never produces these numbers.
 
 Example output is in `examples/` (KO, three railroads, eleven semiconductor companies, five big-box retailers, three industry views).
 
-Not covered yet: 8-K earnings releases, foreign filers (20-F), segment revenue tables, filings that list items only in a page index (Intel), earnings calls after May 2025 (add them yourself as `data/transcripts/<TICKER>/<YYYY-MM-DD>.txt`).
+Not covered yet: foreign filers (20-F), segment revenue tables, filings that list items only in a page index (Intel), earnings calls after May 2025 (those quarters are covered by press releases only; add calls yourself as `data/transcripts/<TICKER>/<YYYY-MM-DD>.txt`).
