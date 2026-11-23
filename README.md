@@ -1,4 +1,4 @@
-# openrouter-mvp
+# filing-briefs
 
 Turn a public company's SEC filings and earnings calls into a one-page research brief, with every claim traceable to a quoted passage in a source document. Run it on several companies to get an industry view.
 
@@ -161,7 +161,7 @@ python3 orc.py models --free
 python3 harness.py -m recursive/flint-v1.0:free nvidia/nemotron-3.5-lightning:free
 ```
 
-Runs every task in `tasks.jsonl` against every model and writes one raw row per pair to `results.jsonl`: output, expected answer, latency, tokens and cost. There is no scoring yet, the three tasks are a smoke test rather than ground truth, and nine known defects are listed in [pull request 2](https://github.com/cathys0425/openrouter-mvp/pull/2).
+Runs every task in `tasks.jsonl` against every model and writes one raw row per pair to `results.jsonl`: output, expected answer, latency, tokens and cost. There is no scoring yet, the three tasks are a smoke test rather than ground truth, and nine known defects are listed in [pull request 2](https://github.com/cathys0425/filing-briefs/pull/2).
 
 ### Claude Code components (`.claude/`)
 
@@ -212,3 +212,9 @@ One real extraction call (about one cent) that fails if the reply is malformed, 
 
 - Filings and XBRL facts: [SEC EDGAR](https://www.sec.gov/edgar), public.
 - Earnings call transcripts: the Hugging Face dataset [`kurry/sp500_earnings_transcripts`](https://huggingface.co/datasets/kurry/sp500_earnings_transcripts). Its MIT label is the uploader's; the original source of the text is not documented, so check before any use beyond personal study.
+
+## License
+
+The code is released under the [MIT License](LICENSE).
+
+The license covers the code only. The files in `examples/` are model-written summaries of public SEC filings and of transcripts from the dataset above; the filings and transcripts themselves are not part of this repository and remain subject to their own terms.
