@@ -2,12 +2,14 @@
 import html.parser
 import re
 
+# What follows the item number in a heading: "Item 1.", "Item 1:", "Item 1\u2014Business", "Item 1 - Business".
+S = r"\s*[.:\u2014\u2013-]"
 # Sections read per form type: (label, start marker, markers that end it).
 SECTIONS = {
-    "10-K": [("Item 1 Business", r"item\s+1[.:]", [r"item\s+1a[.:]", r"item\s+1b[.:]", r"item\s+2[.:]"]),
-             ("Item 1A Risk Factors", r"item\s+1a[.:]", [r"item\s+1b[.:]", r"item\s+1c[.:]", r"item\s+2[.:]"]),
-             ("Item 7 MD&A", r"item\s+7[.:]", [r"item\s+7a[.:]", r"item\s+8[.:]"])],
-    "10-Q": [("Item 2 MD&A", r"item\s+2[.:]", [r"item\s+3[.:]", r"item\s+4[.:]"])],
+    "10-K": [("Item 1 Business", rf"item\s+1{S}", [rf"item\s+1a{S}", rf"item\s+1b{S}", rf"item\s+2{S}"]),
+             ("Item 1A Risk Factors", rf"item\s+1a{S}", [rf"item\s+1b{S}", rf"item\s+1c{S}", rf"item\s+2{S}"]),
+             ("Item 7 MD&A", rf"item\s+7{S}", [rf"item\s+7a{S}", rf"item\s+8{S}"])],
+    "10-Q": [("Item 2 MD&A", rf"item\s+2{S}", [rf"item\s+3{S}", rf"item\s+4{S}"])],
 }
 # A shorter span is not the section text: it is an entry in a cross-reference index
 # ("Item 1A. Risk Factors / Pages 31-46", filings whose body has no item headings) or a
