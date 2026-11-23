@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 import re
+import time
 
 from coverage.text import normalize
 
@@ -63,10 +64,15 @@ def verify(notes, source):
     return ok, [n for n in notes if n not in ok]
 
 
+def request(label, text, model):
+    """(cache file, prompt) for one chunk. The cache is keyed by model + prompt, which includes the text."""
+    prompt = PROMPT.format(categories=CATEGORIES, label=label, text=text)
+    return os.path.join(CACHE, "notes-" + hashlib.sha1((model + prompt).encode()).hexdigest() + ".json"), prompt
+
+
 def extract(label, text, model, complete):
     """Notes for one chunk, cached on disk by model + prompt + text. `cost` is 0 when served from the cache."""
-    prompt = PROMPT.format(categories=CATEGORIES, label=label, text=text)
-    path = os.path.join(CACHE, "notes-" + hashlib.sha1((model + prompt).encode()).hexdigest() + ".json")
+    path, prompt = request(label, text, model)
     if os.path.exists(path):
         with open(path) as f:
             return {"notes": json.load(f)["notes"], "cost": 0}
@@ -76,3 +82,55 @@ def extract(label, text, model, complete):
     with open(path, "w") as f:
         json.dump(result, f)
     return result
+
+
+PENDING = "pending-batch.json"  # in CACHE: the batch submitted but not yet collected
+FINAL = {"completed", "failed", "expired", "cancelled"}
+
+
+def batch(pending, model, submit, get, wait=60):
+    """Fill the notes cache for {cache file: prompt} through one asynchronous batch.
+
+    The batch id is saved before waiting, so an interrupted run collects the same batch
+    when started again instead of paying for a second one. A request that fails or returns
+    malformed notes leaves no cache file; the normal run then extracts it at the sync price.
+    Returns (requests filled, requests not filled, cost).
+    """
+    state = os.path.join(CACHE, PENDING)
+    if os.path.exists(state):
+        with open(state) as f:
+            saved = json.load(f)
+        if saved["model"] != model:
+            raise RuntimeError(f"A batch for {saved['model']} is still pending ({saved['id']}); "
+                               f"run with that model again to collect it, or delete {state}.")
+        batch_id, paths = saved["id"], saved["paths"]
+        print(f"Resuming batch {batch_id} ({len(paths)} requests)")
+    else:
+        if not pending:
+            return 0, 0, 0.0
+        paths = {hashlib.sha1(p.encode()).hexdigest(): p for p in pending}
+        batch_id = submit(model, {k: {"messages": [{"role": "user", "content": pending[p]}]} for k, p in paths.items()})
+        os.makedirs(CACHE, exist_ok=True)
+        with open(state, "w") as f:
+            json.dump({"id": batch_id, "model": model, "paths": paths}, f)
+        print(f"Submitted batch {batch_id}: {len(paths)} requests")
+    while True:
+        b = get(batch_id)
+        # a completed batch can briefly report results as null while they are written
+        if b["status"] in FINAL and (b["status"] != "completed" or b["results"] is not None):
+            break
+        print(f"Batch {batch_id}: {b['status']} {b.get('request_counts')}", flush=True)
+        time.sleep(wait)
+    os.remove(state)
+    if b["status"] != "completed":
+        raise RuntimeError(f"Batch {batch_id} ended as {b['status']}: {(b.get('error') or {}).get('message')}")
+    filled = 0
+    for r in b["results"]:
+        try:
+            notes = parse_notes(r["response"]["body"]["choices"][0]["message"]["content"] or "")
+        except (TypeError, KeyError, IndexError, ValueError):
+            continue  # request error, empty reply or malformed notes
+        with open(paths[r["custom_id"]], "w") as f:
+            json.dump({"notes": notes, "cost": None}, f)
+        filled += 1
+    return filled, len(paths) - filled, (b.get("usage") or {}).get("cost") or 0.0

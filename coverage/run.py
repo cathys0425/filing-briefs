@@ -1,4 +1,4 @@
-"""Cover companies: python3 -m coverage.run AAPL MSFT --since 2021-01-01 -e MODEL -w MODEL [--industry NAME]
+"""Cover companies: python3 -m coverage.run AAPL MSFT --since 2021-01-01 -e MODEL -w MODEL [--industry NAME] [--batch]
 
 Per company it writes out/<TICKER>.md and out/<TICKER>.notes.json. With --industry it also
 writes out/industry-<NAME>.md from the company briefs.
@@ -13,7 +13,7 @@ import os
 import re
 
 from coverage import edgar, extract, onepager, text, transcripts
-from orc import APIError, complete
+from orc import APIError, batch_get, batch_submit, complete
 
 INDUSTRY_PROMPT = """These are one-page briefs for companies in one industry: {name}.
 Write a one-page industry view for a systematic long/short equity researcher. Markdown, sections:
@@ -76,6 +76,34 @@ def documents(ticker, cik, since):
                 yield f"Earnings call {day}", "call", day, fh.read()
 
 
+def readable(ticker, cik, since, failures):
+    """Yield (label, form, filed, text) for documents worth reading; record the rest in `failures`."""
+    for label, form, day, body in documents(ticker, cik, since):
+        if body is None:
+            failures.append(f"{label}: section or exhibit not found")
+        elif form == "call" and len(body) < transcripts.SHORT:
+            failures.append(f"{label}: transcript is only {len(body)} characters (empty or cut off)")
+        elif form != "call" and len(body) < text.MIN_SECTION:
+            failures.append(f"{label}: only {len(body)} characters under this heading "
+                            "(cross-reference or incorporation by reference, not the section text)")
+        else:
+            yield label, form, day, body
+
+
+def prefill(tickers, since, model):
+    """Run every extraction that is not cached yet as one OpenRouter batch: about half price, not immediate."""
+    pending = {}
+    for ticker in tickers:
+        transcripts.fetch(ticker)
+        for label, _, _, body in readable(ticker, edgar.cik_for(ticker), since, []):
+            for chunk in text.chunks(body):
+                path, prompt = extract.request(label, chunk, model)
+                if not os.path.exists(path):
+                    pending[path] = prompt
+    filled, missed, cost = extract.batch(pending, model, batch_submit, batch_get)
+    print(f"Batch extraction: {filled} chunks filled, {missed} left for the normal run | batch cost ${cost:.4f}")
+
+
 def cover(ticker, since, extract_model, write_model, complete=complete):
     cik = edgar.cik_for(ticker)
     company = edgar.company(cik)
@@ -83,17 +111,7 @@ def cover(ticker, since, extract_model, write_model, complete=complete):
     if not transcripts.fetch(ticker):
         failures.append("earnings calls: ticker not in the transcript dataset")
     forms, filed = collections.Counter(), []
-    for label, form, day, body in documents(ticker, cik, since):
-        if body is None:
-            failures.append(f"{label}: section or exhibit not found")
-            continue
-        if form == "call" and len(body) < transcripts.SHORT:
-            failures.append(f"{label}: transcript is only {len(body)} characters (empty or cut off)")
-            continue
-        if form != "call" and len(body) < text.MIN_SECTION:
-            failures.append(f"{label}: only {len(body)} characters under this heading "
-                            "(cross-reference or incorporation by reference, not the section text)")
-            continue
+    for label, form, day, body in readable(ticker, cik, since, failures):
         forms[form] += 1
         filed.append(day)
         for i, chunk in enumerate(text.chunks(body)):
@@ -133,7 +151,11 @@ def main():
     p.add_argument("-e", "--extract-model", required=True, help="cheap model that reads every document")
     p.add_argument("-w", "--write-model", required=True, help="stronger model that writes the briefs")
     p.add_argument("--industry", help="also write an industry view with this name")
+    p.add_argument("--batch", action="store_true",
+                   help="extract through the OpenRouter Batch API: about half price, finishes in minutes to 24 hours")
     a = p.parse_args()
+    if a.batch:
+        prefill(a.tickers, a.since, a.extract_model)
     pages = {t: cover(t, a.since, a.extract_model, a.write_model) for t in a.tickers}
     if a.industry:
         view, cost = industry_view(a.industry, pages, a.write_model)

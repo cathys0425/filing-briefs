@@ -82,6 +82,26 @@ def complete(messages, model, max_tokens=None, temperature=None):
     return text, body.get("usage", {}), time.time() - t
 
 
+def batch_submit(model, bodies):
+    """Submit {custom_id: request body} as one asynchronous batch (about half price). Returns the batch id."""
+    # endpoint and model must come before requests: OpenRouter reads the body as a stream.
+    payload = {"endpoint": "/v1/chat/completions", "model": model,
+               "requests": [{"custom_id": k, "body": b} for k, b in bodies.items()]}
+    return call("/batches", payload, timeout=600)["id"]
+
+
+def batch_get(batch_id):
+    """The batch as OpenRouter reports it: status, request_counts, usage and, once completed, results."""
+    for attempt in range(6):
+        try:
+            return call(f"/batches/{batch_id}")
+        except APIError as e:
+            # A batch can read as "not found" for some seconds after the submit returned its id (observed).
+            if "HTTP 404" not in str(e) or attempt == 5:
+                raise
+            time.sleep(20)
+
+
 def build_messages(prompt, system):
     msgs = [{"role": "system", "content": system}] if system else []
     return msgs + [{"role": "user", "content": prompt}]
