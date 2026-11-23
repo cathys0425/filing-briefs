@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""OpenRouter MVP: one file, no dependencies.
+"""OpenRouter client: one file, no dependencies.
 
   python3 orc.py ask "your question"            one-shot answer
   python3 orc.py chat                           interactive chat (keeps history)
@@ -185,7 +185,7 @@ def cmd_models(a):
 
 
 def main():
-    p = argparse.ArgumentParser(description="OpenRouter MVP client")
+    p = argparse.ArgumentParser(description="OpenRouter client")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     def common(sp, multi=False):
