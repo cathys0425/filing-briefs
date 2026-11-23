@@ -92,8 +92,11 @@ python3 -m coverage.run UNP CSX NSC --since 2021-01-01 -e anthropic/claude-haiku
 | `-e` | Model that reads every document (cheap) |
 | `-w` | Model that writes the briefs (stronger) |
 | `--industry` | Also write an industry view with this name |
+| `--batch` | Run extraction through the OpenRouter Batch API: half the price, but not immediate |
 
 Output goes to `out/`. Downloads and model replies are cached in `data/cache`, so an interrupted run can simply be started again and a repeated run costs nothing.
+
+With `--batch`, every extraction that is not cached yet is submitted as one asynchronous batch and the run waits for it. A test batch of 10 requests cost exactly half the sync price and took 19 minutes; OpenRouter says most finish in minutes and all within 24 hours. If the run is interrupted, start the same command again: it collects the batch already submitted instead of paying for a new one. Writing the briefs stays on the normal API. The model must have a batch variant (see the [batch models list](https://openrouter.ai/models?variant=batch)).
 
 Before covering a new company, check that its filings are cut into sections of plausible length (tens of thousands of characters). Filing layouts vary and this is the step that breaks most often; see Limitations.
 
